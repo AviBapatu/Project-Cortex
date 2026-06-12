@@ -1,4 +1,4 @@
-# 🚀 Project Cortex — AI-Native CRM Architecture
+# 🚀 Project Cortex — AI-Native CRM
 
 > A decoupled, AI-native marketing execution engine featuring **Hybrid Search (RFM + RAG)**, **Algorithmic Queue Backpressure**, and **Real-Time Multi-Armed Bandit (MAB) optimization**.
 
