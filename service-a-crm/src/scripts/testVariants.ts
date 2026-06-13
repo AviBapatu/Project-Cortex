@@ -10,8 +10,8 @@ import { generateCampaignVariants } from '../services/rag.service.js';
 
 async function main() {
   console.log('Testing generateCampaignVariants...');
-  const variants = await generateCampaignVariants('impulse hikers who love budget gear', 'impulse hikers who love budget gear');
-  console.log('Variants returned:', JSON.stringify(variants, null, 2));
+  const { variants } = await generateCampaignVariants('impulse hikers who love budget gear', 'impulse hikers who love budget gear');
+  console.log(JSON.stringify(variants, null, 2));
 }
 
 main().catch(console.error);
