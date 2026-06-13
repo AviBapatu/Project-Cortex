@@ -6,6 +6,7 @@ export interface LaunchPayload {
   name: string;
   goal: string;
   segmentDescription: string;
+  queryBreakdown?: any;
   rfmFilters?: Record<string, unknown>;
 }
 
@@ -19,17 +20,13 @@ export type LaunchState =
 /**
  * useLaunch
  *
- * Orchestrates the 2-step campaign launch flow:
+ * Orchestrates the campaign creation:
  *   1. POST /api/campaigns     → creates DRAFT, gets _id
- *   2. POST /api/campaigns/:id/launch → pushes 15% batch to BullMQ, returns campaignId
- *
- * The backend owns segmentQuery and variants — the frontend does NOT re-send them.
- * They are read from MongoDB by the launch controller.
  *
  * Usage:
- *   const { launch, state, reset } = useLaunch();
- *   await launch({ name: 'Summer Hikers', goal: '20% off', segmentDescription: 'Impulsive hikers' });
- *   if (state.status === 'launched') navigate to CampaignDetail with state.campaignId
+ *   const { generate, state, reset } = useLaunch();
+ *   const id = await generate({ name: 'Summer Hikers', goal: '20% off', segmentDescription: 'Impulsive hikers' });
+ *   if (id) navigate(`/campaigns/${id}`);
  */
 export function useLaunch() {
   const [state, setState] = useState<LaunchState>({ status: 'idle' });
@@ -55,53 +52,22 @@ export function useLaunch() {
       }
 
       draftId = createData.campaign._id as string;
+      setState({
+        status: 'launched',
+        campaignId: draftId,
+      });
+      return draftId;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Campaign creation failed.';
       console.error('[useLaunch] create step failed:', err);
       setState({ status: 'error', message });
-      return;
-    }
-
-    // ── Step 2: Launch — push 15% batch to BullMQ ─────────────────────────
-    setState({ status: 'queuing' });
-
-    try {
-      const launchRes = await fetch(`${API_BASE}/campaigns/${draftId}/launch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const launchData = await launchRes.json();
-
-      if (!launchRes.ok || !launchData.success) {
-        // Campaign was created but queue failed — still navigate, detail page shows status
-        const message = launchData.error ?? 'Queue initialization failed.';
-        console.error('[useLaunch] launch step failed:', message);
-        // Surface as error but still expose the draftId so UI can retry
-        setState({
-          status: 'error',
-          message: `Campaign saved (ID: ${draftId}) but queue failed: ${message}. Open the campaign and retry launch.`,
-        });
-        return;
-      }
-
-      setState({
-        status: 'launched',
-        campaignId: draftId, // Use MongoDB _id for the detail view route
-      });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Queue initialization failed.';
-      console.error('[useLaunch] launch step failed:', err);
-      setState({
-        status: 'error',
-        message: `Campaign draft saved but queue failed to initialize: ${message}`,
-      });
+      return null;
     }
   }, []);
 
   const reset = useCallback(() => setState({ status: 'idle' }), []);
 
-  const launching = state.status === 'creating' || state.status === 'queuing';
+  const launching = state.status === 'creating';
   const error = state.status === 'error' ? state.message : null;
   const launchedId = state.status === 'launched' ? state.campaignId : null;
 

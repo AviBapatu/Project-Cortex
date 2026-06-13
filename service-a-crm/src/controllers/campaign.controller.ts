@@ -1,7 +1,7 @@
 import { type Request, type Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Campaign } from '../models/Campaign.js';
-import { hybridSearch, generateCampaignVariants } from '../services/rag.service.js';
+import { hybridSearch, deterministicSearch, generateCampaignVariants, refineSingleVariant } from '../services/rag.service.js';
 import { dispatchQueue } from '../queues/queues.js';
 
 // ── POST /api/campaigns ────────────────────────────────────────────────────────
@@ -11,7 +11,7 @@ export async function createCampaign(req: Request, res: Response): Promise<void>
       name,
       goal,
       segmentDescription,
-      rfmFilters = {},
+      queryBreakdown = {},
     } = req.body;
 
     if (!name || !goal || !segmentDescription) {
@@ -19,8 +19,18 @@ export async function createCampaign(req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Step 1: Hybrid search to determine audience
-    const { shoppers, audienceSize, segmentQuery } = await hybridSearch(rfmFilters, segmentDescription);
+    // Step 1: Use proper router based on intent
+    const isSemantic = queryBreakdown.usedSemanticSearch !== false; // default to true if missing
+    const filters = queryBreakdown.extractedFilters || {};
+    
+    let searchResult;
+    if (isSemantic) {
+      searchResult = await hybridSearch(filters, segmentDescription);
+    } else {
+      searchResult = await deterministicSearch(filters);
+    }
+
+    const { shoppers, audienceSize, audienceAov } = searchResult;
 
     if (audienceSize === 0) {
       res.status(404).json({ success: false, error: 'No matching shoppers found for this segment.' });
@@ -28,15 +38,21 @@ export async function createCampaign(req: Request, res: Response): Promise<void>
     }
 
     // Step 2: Generate 3 A/B/C variants via Gemini (with fallback)
-    const variants = await generateCampaignVariants(segmentDescription, goal);
+    const { variants, recommendedChannels } = await generateCampaignVariants(segmentDescription, goal);
 
     // Step 3: Save Campaign as DRAFT
     const campaign = await Campaign.create({
       campaignId: uuidv4(),
       name,
       goal,
-      segmentQuery,
+      segmentQuery: {
+        isSemantic,
+        filters,
+        semanticQuery: segmentDescription
+      },
       audienceSize,
+      audienceAov: audienceAov || 0,
+      channels: recommendedChannels || ['EMAIL'],
       variants,
       status: 'DRAFT',
     });
@@ -66,8 +82,25 @@ export async function launchCampaign(req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Re-run hybrid search to get the full audience list
-    const { shoppers } = await hybridSearch(campaign.segmentQuery, campaign.goal);
+    // Re-run the correct search path to get the full audience list
+    const sq = campaign.segmentQuery || {};
+    let shoppers;
+    
+    // Check if it's the new format (has isSemantic) or the old buggy format
+    if (sq.isSemantic !== undefined) {
+      if (sq.isSemantic) {
+        const result = await hybridSearch(sq.filters || {}, sq.semanticQuery);
+        shoppers = result.shoppers;
+      } else {
+        const result = await deterministicSearch(sq.filters || {});
+        shoppers = result.shoppers;
+      }
+    } else {
+      // Fallback for old campaigns created before the fix
+      const result = await hybridSearch({}, campaign.goal);
+      shoppers = result.shoppers;
+    }
+    
     const initialBatchSize = Math.ceil(shoppers.length * 0.15);
     const initialBatch = shoppers.slice(0, initialBatchSize);
 
@@ -99,9 +132,10 @@ export async function launchCampaign(req: Request, res: Response): Promise<void>
 // ── GET /api/campaigns ─────────────────────────────────────────────────────────
 export async function listCampaigns(req: Request, res: Response): Promise<void> {
   try {
-    const { status, page = '1', limit = '20' } = req.query;
+    const { status, isSaved, page = '1', limit = '20' } = req.query;
     const filter: Record<string, any> = {};
     if (status) filter.status = status;
+    if (isSaved === 'true') filter.isSaved = true;
 
     const total = await Campaign.countDocuments(filter);
     const campaigns = await Campaign.find(filter)
@@ -136,7 +170,7 @@ export async function getCampaign(req: Request, res: Response): Promise<void> {
 export async function getCampaignStats(req: Request, res: Response): Promise<void> {
   try {
     const campaign = await Campaign.findById(req.params.id).select(
-      'campaignId name status audienceSize processed failed winnerVariant variants'
+      'campaignId name status audienceSize audienceAov channels processed failed winnerVariant variants isSaved'
     );
     if (!campaign) {
       res.status(404).json({ success: false, error: 'Campaign not found.' });
@@ -154,6 +188,7 @@ export async function getCampaignStats(req: Request, res: Response): Promise<voi
       const openRate = live.sent > 0 ? parseFloat(((live.opens / live.sent) * 100).toFixed(1)) : 0;
       return {
         variantId: v.variantId,
+        template: v.template,
         sent: live.sent,
         opens: live.opens,
         clicks: live.clicks,
@@ -173,14 +208,135 @@ export async function getCampaignStats(req: Request, res: Response): Promise<voi
         name: campaign.name,
         status: campaign.status,
         audienceSize: campaign.audienceSize,
+        audienceAov: campaign.audienceAov || 0,
+        channels: campaign.channels || ['EMAIL'],
         processed: campaign.processed,
         failed: campaign.failed,
         progressPct: parseFloat(pct.toFixed(1)),
         winnerVariant: campaign.winnerVariant ?? null,
         explorationComplete,
+        isSaved: campaign.isSaved,
         variants: variantStats,
       },
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── POST /api/campaigns/:id/toggle-save ────────────────────────────────────────
+export async function toggleSave(req: Request, res: Response): Promise<void> {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign) {
+      res.status(404).json({ success: false, error: 'Campaign not found.' });
+      return;
+    }
+    
+    campaign.isSaved = !campaign.isSaved;
+    await campaign.save();
+    
+    res.json({ success: true, isSaved: campaign.isSaved });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── PUT /api/campaigns/:id/channels ───────────────────────────────────────────
+export async function updateCampaignChannels(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { channels } = req.body;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      res.status(404).json({ success: false, error: 'Campaign not found.' });
+      return;
+    }
+    if (campaign.status !== 'DRAFT') {
+      res.status(400).json({ success: false, error: 'Can only edit channels when campaign is in DRAFT status.' });
+      return;
+    }
+
+    campaign.channels = channels || ['EMAIL'];
+    await campaign.save();
+
+    res.json({ success: true, channels: campaign.channels });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── PUT /api/campaigns/:id/variants/:variantId ───────────────────────────────
+export async function updateVariantTemplate(req: Request, res: Response): Promise<void> {
+  try {
+    const { id, variantId } = req.params;
+    const { template } = req.body;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      res.status(404).json({ success: false, error: 'Campaign not found.' });
+      return;
+    }
+    if (campaign.status !== 'DRAFT') {
+      res.status(400).json({ success: false, error: 'Can only edit variants when campaign is in DRAFT status.' });
+      return;
+    }
+
+    const variant = campaign.variants.find(v => v.variantId === variantId);
+    if (!variant) {
+      res.status(404).json({ success: false, error: 'Variant not found.' });
+      return;
+    }
+
+    variant.template = template;
+    await campaign.save();
+
+    res.json({ success: true, variant });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── POST /api/campaigns/:id/refine ───────────────────────────────────────────
+export async function refineCampaignVariants(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { refinementPrompt, targetVariant } = req.body;
+
+    const campaign = await Campaign.findById(id);
+    if (!campaign) {
+      res.status(404).json({ success: false, error: 'Campaign not found.' });
+      return;
+    }
+    if (campaign.status !== 'DRAFT') {
+      res.status(400).json({ success: false, error: 'Can only refine variants when campaign is in DRAFT status.' });
+      return;
+    }
+
+    const sq = campaign.segmentQuery || {};
+    const segmentDescription = sq.semanticQuery || campaign.goal;
+    
+    if (targetVariant && targetVariant !== 'ALL') {
+      const variant = campaign.variants.find(v => v.variantId === targetVariant);
+      if (!variant) {
+        res.status(404).json({ success: false, error: 'Target variant not found.' });
+        return;
+      }
+      const newTemplate = await refineSingleVariant(segmentDescription, campaign.goal, targetVariant, variant.template, refinementPrompt);
+      variant.template = newTemplate;
+    } else {
+      const newGeneration = await generateCampaignVariants(segmentDescription, campaign.goal, refinementPrompt);
+      // Completely replace variants
+      campaign.variants = newGeneration.variants as any;
+      if (newGeneration.recommendedChannels && newGeneration.recommendedChannels.length > 0) {
+        campaign.channels = newGeneration.recommendedChannels;
+      }
+    }
+    
+    await campaign.save();
+
+    res.json({ success: true, variants: campaign.variants });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

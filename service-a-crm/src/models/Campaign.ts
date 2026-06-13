@@ -16,11 +16,14 @@ export interface ICampaign extends Document {
   goal: string;
   segmentQuery: Record<string, any>;
   audienceSize: number;
+  audienceAov: number;
+  channels: string[];
   variants: ICampaignVariant[];
   status: 'DRAFT' | 'QUEUED' | 'EXECUTING' | 'OPTIMIZING' | 'COMPLETED' | 'FAILED';
   winnerVariant: string | null;
   processed: number;
   failed: number;
+  isSaved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +34,8 @@ const CampaignSchema = new Schema<ICampaign>({
   goal: { type: String, required: true },
   segmentQuery: { type: Schema.Types.Mixed, required: true },
   audienceSize: { type: Number, required: true },
+  audienceAov: { type: Number, default: 0 },
+  channels: { type: [String], default: ['EMAIL'] },
   variants: [{
     variantId: { type: String, enum: ['A', 'B', 'C'], required: true },
     template: { type: String, required: true },
@@ -48,7 +53,8 @@ const CampaignSchema = new Schema<ICampaign>({
   },
   winnerVariant: { type: String, default: null },
   processed: { type: Number, default: 0 },
-  failed: { type: Number, default: 0 }
+  failed: { type: Number, default: 0 },
+  isSaved: { type: Boolean, default: false }
 }, { timestamps: true });
 
 export const Campaign = model<ICampaign>('Campaign', CampaignSchema);
