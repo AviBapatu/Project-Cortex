@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: cortex-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  service-a-api:
+    build:
+      context: ./service-a-crm
+      dockerfile: Dockerfile
+    container_name: cortex-api
+    command: npm run start:api
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./service-a-crm/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  service-a-workers:
+    build:
+      context: ./service-a-crm
+      dockerfile: Dockerfile
+    container_name: cortex-workers
+    command: npm run start:workers
+    env_file:
+      - ./service-a-crm/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SERVICE_B_URL=http://service-b:5000
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  service-b:
+    build:
+      context: ./service-b-channel-stub
+      dockerfile: Dockerfile
+    container_name: cortex-service-b
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./service-b-channel-stub/.env
+    environment:
+      - SERVICE_A_WEBHOOK_URL=http://service-a-api:4000/webhooks/stub
+    depends_on:
+      - service-a-api
+    restart: unless-stopped
+
+volumes:
+  redis_data:
