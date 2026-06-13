@@ -7,7 +7,7 @@ const CRON_LOCK_TTL = 3600; // 1 hour — prevents duplicate runs across replica
 
 /**
  * Starts the opportunity engine cron.
- * Schedules at 02:00 AM daily.
+ * Schedules at the top of every hour.
  *
  * ── Tier-1 Fix 12.12: Distributed Redis lock ──
  * If multiple replicas run this, only one will acquire the lock and execute.
@@ -36,7 +36,7 @@ export function startOpportunityCron(): void {
     // Lock expires automatically via Redis TTL — no need to explicitly delete
   });
 
-  console.log('[opportunityCron] Scheduled at 02:00 AM daily (distributed lock enabled).');
+  console.log('[opportunityCron] Scheduled hourly (distributed lock enabled).');
 }
 
 /**

@@ -71,7 +71,7 @@ export async function convertOpportunity(req: Request, res: Response): Promise<v
       return;
     }
 
-    const variants = await generateCampaignVariants(segmentDescription, goal);
+    const { variants } = await generateCampaignVariants(segmentDescription, goal);
 
     const campaign = await Campaign.create({
       campaignId: uuidv4(),
