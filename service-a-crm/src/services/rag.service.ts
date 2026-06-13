@@ -49,6 +49,7 @@ export interface CampaignVariant {
 export interface HybridSearchResult {
   shoppers: IShopper[];
   audienceSize: number;
+  audienceAov: number;
   segmentQuery: Record<string, any>;
 }
 
