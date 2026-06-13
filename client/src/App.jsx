@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import TopNavBar from './components/TopNavBar';
-import Dashboard from './views/Dashboard';
-import AudienceDiscovery from './views/AudienceDiscovery';
 import Campaigns from './views/Campaigns';
 import CampaignDetail from './views/CampaignDetail';
 import Shoppers from './views/Shoppers';
 import CreateCampaignModal from './components/CreateCampaignModal';
 import CommandCenter from './views/CommandCenter';
+import SavedTemplates from './views/SavedTemplates';
 
 const API_BASE = 'http://localhost:4000/api';
 
@@ -58,6 +57,7 @@ function App() {
     switch (location.pathname) {
       case '/': return 'Command Center';
       case '/campaigns': return 'Campaigns';
+      case '/templates': return 'Saved Templates';
       case '/shoppers': return 'Shoppers';
       default: return 'Enterprise AI CRM';
     }
@@ -86,6 +86,7 @@ function App() {
             <Route path="/" element={<CommandCenter />} />
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/campaigns/:id" element={<CampaignDetail />} />
+            <Route path="/templates" element={<SavedTemplates />} />
             <Route path="/shoppers" element={<Shoppers />} />
           </Routes>
         </main>

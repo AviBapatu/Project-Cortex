@@ -6,6 +6,7 @@ export default function Sidebar() {
     { id: '/', icon: 'dashboard', label: 'Command Center', exact: true },
     { id: '/shoppers', icon: 'people', label: 'Shoppers' },
     { id: '/campaigns', icon: 'campaign', label: 'Campaigns' },
+    { id: '/templates', icon: 'bookmark', label: 'Saved Templates' },
   ];
 
   return (
