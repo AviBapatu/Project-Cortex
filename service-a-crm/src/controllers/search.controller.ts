@@ -59,7 +59,7 @@ export const discoverAudience = async (req: Request, res: Response): Promise<voi
     }
 
     // ── Stage 3: Generate A/B/C variants for preview ────────────────────────
-    const variants = await generateCampaignVariants(query.trim(), query.trim());
+    const { variants } = await generateCampaignVariants(query.trim(), query.trim());
 
     // ── Stage 4: Return stateless preview payload with XAI breakdown ────────
     // Top 50 shoppers for the preview dashboard — strip embedding vectors (large)
