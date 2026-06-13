@@ -17,14 +17,17 @@ const CHANNEL_COSTS = {
   WHATSAPP: 0.07,
 };
 
-function RoiEstimator({ stats, onToggleChannel }) {
+function RoiEstimator({ stats, onToggleChannel, discountPct = 0, applyDiscountToRoi = false }) {
   const { audienceSize, audienceAov, channels } = stats;
   
   // Baseline conversion assumption
   const EXPECTED_CONVERSION_RATE = 0.03; 
   
   // Formulas
-  const estimatedRevenue = audienceSize * EXPECTED_CONVERSION_RATE * audienceAov;
+  let estimatedRevenue = audienceSize * EXPECTED_CONVERSION_RATE * audienceAov;
+  if (applyDiscountToRoi && discountPct > 0) {
+    estimatedRevenue = estimatedRevenue * (1 - (discountPct / 100));
+  }
   const cogs = estimatedRevenue * 0.40; // 40% COGS
   
   const variableCostPerUser = (channels || []).reduce((sum, ch) => sum + (CHANNEL_COSTS[ch] || 0), 0);
@@ -218,6 +221,10 @@ export default function CampaignDetail() {
   const [refinementPrompt, setRefinementPrompt] = useState('');
   const [targetVariant, setTargetVariant] = useState('ALL');
   const [refining, setRefining] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [discountPct, setDiscountPct] = useState(0);
+  const [applyDiscountToRoi, setApplyDiscountToRoi] = useState(false);
+  const [importantNotes, setImportantNotes] = useState('');
 
   const isActive = campaignId != null;
   const { stats, loading, error } = useCampaignStats(campaignId, isActive);
@@ -235,13 +242,23 @@ export default function CampaignDetail() {
   };
 
   const handleRefine = async () => {
-    if (!refinementPrompt.trim()) return;
+    let finalPrompt = refinementPrompt.trim() ? refinementPrompt : 'Please apply the promotional details to the message.';
+    const hasPromoDetails = couponCode || discountPct > 0 || importantNotes;
+    if (!refinementPrompt.trim() && !hasPromoDetails) return;
+    
+    if (hasPromoDetails) {
+      finalPrompt += `\n\nAdditional Requirements:\n`;
+      if (couponCode) finalPrompt += `- Include coupon code: ${couponCode}\n`;
+      if (discountPct > 0) finalPrompt += `- Offer discount: ${discountPct}%\n`;
+      if (importantNotes) finalPrompt += `- Important notes: ${importantNotes}\n`;
+    }
+
     try {
       setRefining(true);
       await fetch(`${API_BASE}/campaigns/${campaignId}/refine`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refinementPrompt, targetVariant }),
+        body: JSON.stringify({ refinementPrompt: finalPrompt, targetVariant }),
       });
       setRefinementPrompt('');
     } catch (err) {
@@ -350,7 +367,7 @@ export default function CampaignDetail() {
                 className="btn btn-secondary" 
                 onClick={async () => {
                   try {
-                    await fetch(`${API_BASE}/campaigns/${id}/toggle-save`, { method: 'POST' });
+                    await fetch(`${API_BASE}/campaigns/${campaignId}/toggle-save`, { method: 'POST' });
                   } catch (e) {
                     console.error(e);
                   }
@@ -396,7 +413,12 @@ export default function CampaignDetail() {
             </div>
           </div>
 
-          <RoiEstimator stats={stats} onToggleChannel={handleToggleChannel} />
+          <RoiEstimator 
+            stats={stats} 
+            onToggleChannel={handleToggleChannel} 
+            discountPct={discountPct} 
+            applyDiscountToRoi={applyDiscountToRoi} 
+          />
 
           {/* ── Winner Banner ────────────────────────────────────────────────── */}
           {stats.explorationComplete && stats.winnerVariant && (
@@ -450,10 +472,47 @@ export default function CampaignDetail() {
                 <button 
                   className="btn btn-primary" 
                   onClick={handleRefine}
-                  disabled={refining || !refinementPrompt.trim()}
+                  disabled={refining || (!refinementPrompt.trim() && !couponCode && discountPct === 0 && !importantNotes)}
                 >
                   {refining ? 'Refining...' : 'Regenerate'}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Offer Details (DRAFT ONLY) ──────────────────────────────────── */}
+          {stats.status === 'DRAFT' && (
+            <div className="card" style={{ padding: 'var(--spacing-md)', background: 'var(--surface)', border: '1px solid var(--outline-variant)' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="material-symbols-outlined" style={{ color: '#059669' }}>local_offer</span>
+                Offer Details
+              </h3>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 600 }}>Coupon Code</label>
+                  <input type="text" className="cc-input" value={couponCode} onChange={e => setCouponCode(e.target.value)} placeholder="e.g. SUMMER20" style={{ width: '100%', padding: '8px', border: '1px solid var(--outline)', borderRadius: '4px' }} />
+                </div>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 600 }}>Discount (%)</label>
+                  <input type="number" className="cc-input" value={discountPct} onChange={e => setDiscountPct(Number(e.target.value) || 0)} min="0" max="100" style={{ width: '100%', padding: '8px', border: '1px solid var(--outline)', borderRadius: '4px' }} />
+                </div>
+                <div style={{ flex: '1 1 100%', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <input type="checkbox" checked={applyDiscountToRoi} onChange={e => setApplyDiscountToRoi(e.target.checked)} id="roi-toggle" style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} />
+                  <label htmlFor="roi-toggle" style={{ fontSize: '0.875rem', cursor: 'pointer' }}>Include discount in ROI Revenue calculations</label>
+                </div>
+                <div style={{ flex: '1 1 100%', marginTop: '8px' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '8px', fontWeight: 600 }}>Important Notes to include in message</label>
+                  <textarea className="cc-input" value={importantNotes} onChange={e => setImportantNotes(e.target.value)} placeholder="e.g. Free shipping on orders over $50" style={{ width: '100%', minHeight: '60px', padding: '8px', border: '1px solid var(--outline)', borderRadius: '4px', resize: 'vertical' }}></textarea>
+                </div>
+                <div style={{ flex: '1 1 100%', display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={handleRefine}
+                    disabled={refining || (!refinementPrompt.trim() && !couponCode && discountPct === 0 && !importantNotes)}
+                  >
+                    {refining ? 'Refining...' : 'Regenerate with Offer'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
