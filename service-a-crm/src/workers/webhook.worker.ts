@@ -29,12 +29,28 @@ async function enqueueRemaining85Percent(
   const campaign = await Campaign.findOne({ campaignId });
   if (!campaign) return;
 
-  // Get full audience by re-querying segmentQuery
-  const { Shopper: ShopperModel } = await import('../models/Shopper.js');
-  const allShoppers = await ShopperModel.find({
-    ...campaign.segmentQuery,
-    status: 'ACTIVE',
-  }).select('customerId').limit(campaign.audienceSize);
+  // Get full audience by re-querying the segment
+  const { hybridSearch, deterministicSearch } = await import('../services/rag.service.js');
+  
+  let allShoppers = [];
+  const sq = campaign.segmentQuery || {};
+  
+  if (sq.isSemantic !== undefined) {
+    if (sq.isSemantic) {
+      const result = await hybridSearch(sq.filters || {}, sq.semanticQuery);
+      allShoppers = result.shoppers;
+    } else {
+      const result = await deterministicSearch(sq.filters || {});
+      allShoppers = result.shoppers;
+    }
+  } else {
+    // Old format fallback
+    const { Shopper: ShopperModel } = await import('../models/Shopper.js');
+    allShoppers = await ShopperModel.find({
+      ...campaign.segmentQuery,
+      status: 'ACTIVE',
+    }).select('customerId').limit(campaign.audienceSize);
+  }
 
   // Skip the first batch already dispatched
   const remainingShoppers = allShoppers.slice(alreadyProcessedCount);

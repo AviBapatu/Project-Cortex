@@ -17,10 +17,9 @@ export interface IShopper extends Document {
   ai: {
     digitalTwinSummary: string;
     embeddingVector: number[] | null;
-    embeddingModel: string;
     lastEmbeddedAt?: Date;
   };
-  status: 'ACTIVE' | 'EMBEDDING_PENDING' | 'INACTIVE';
+  status: 'ACTIVE' | 'EMBEDDING_PENDING' | 'INACTIVE' | 'CHURNED';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,17 +46,16 @@ const ShopperSchema = new Schema<IShopper>({
       validate: {
         validator: function(v: number[] | null) {
           if (v === null) return true;
-          return v.length === 3072;
+          return v.length === 384;
         },
-        message: 'Embedding vector must be exactly 3072 dimensions.'
+        message: 'Embedding vector must be exactly 384 dimensions.'
       }
     },
-    embeddingModel: { type: String, default: 'gemini-embedding-001' },
     lastEmbeddedAt: { type: Date }
   },
   status: {
     type: String,
-    enum: ['ACTIVE', 'EMBEDDING_PENDING', 'INACTIVE'],
+    enum: ['ACTIVE', 'EMBEDDING_PENDING', 'INACTIVE', 'CHURNED'],
     default: 'ACTIVE'
   }
 }, { timestamps: true });
