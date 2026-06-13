@@ -8,6 +8,8 @@ const requiredVariables = [
   'REDIS_HOST',
   'REDIS_PORT',
   'NODE_ENV',
+  'GROQ_API_KEY',
+  'GOOGLE_API_KEY',
 ];
 
 const missingVariables = requiredVariables.filter((key) => !process.env[key]);
@@ -23,4 +25,6 @@ export const config = {
   REDIS_HOST: process.env.REDIS_HOST as string,
   REDIS_PORT: parseInt(process.env.REDIS_PORT as string, 10),
   NODE_ENV: process.env.NODE_ENV as string,
+  GROQ_API_KEY: process.env.GROQ_API_KEY as string,
+  GOOGLE_API_KEY: process.env.GOOGLE_API_KEY as string,
 };

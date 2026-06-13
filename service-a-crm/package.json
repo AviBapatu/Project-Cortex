@@ -4,21 +4,35 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:api": "ts-node src/server.ts",
-    "dev:api": "nodemon --exec ts-node src/server.ts",
-    "verify:infra": "ts-node src/verify-connections.ts"
+    "start:api": "tsx src/server.ts",
+    "dev:api": "tsx watch src/server.ts",
+    "start:workers": "tsx workers.entry.ts",
+    "dev:workers": "tsx watch workers.entry.ts",
+    "verify:infra": "tsx src/verify-connections.ts",
+    "test:prompt": "tsx src/scripts/test-prompt.ts",
+    "seed": "tsx src/scripts/seed.ts",
+    "run:opportunity": "tsx -e \"import('./src/cron/opportunityEngine.cron.js').then(m => m.triggerOpportunityEngine()).then(() => process.exit(0))\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@types/axios": "^0.9.36",
+    "@types/node-cron": "^3.0.11",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.17.0",
+    "bullmq": "^5.78.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "groq-sdk": "^1.2.1",
     "ioredis": "^5.11.1",
     "mongoose": "^9.7.0",
-    "morgan": "^1.11.0"
+    "morgan": "^1.11.0",
+    "node-cron": "^4.2.1",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -27,6 +41,7 @@
     "@types/node": "^25.9.3",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
