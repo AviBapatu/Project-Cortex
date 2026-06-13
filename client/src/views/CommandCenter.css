@@ -431,3 +431,96 @@
   0% { transform: scale(0.9); opacity: 1; }
   100% { transform: scale(1.5); opacity: 0; }
 }
+
+/* ── 4. Discovery XAI & Pagination ─────────────────── */
+.cc-xai-banner {
+  padding: 12px 16px;
+  border-radius: var(--cc-radius-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cc-text-primary);
+  border-left: 4px solid var(--cc-primary);
+  background: var(--cc-bg-surface);
+  box-shadow: var(--cc-shadow-card);
+}
+
+.cc-xai-banner.semantic {
+  border-left-color: var(--cc-primary);
+  background: rgba(79, 70, 229, 0.05);
+}
+
+.cc-xai-banner.deterministic {
+  border-left-color: var(--cc-text-secondary);
+  background: rgba(119, 117, 135, 0.05);
+}
+
+.cc-twin-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--cc-text-primary);
+  margin-bottom: 8px;
+}
+
+.cc-match-score {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--cc-primary-container);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cc-twin-summary {
+  font-size: 12px;
+  color: var(--cc-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  max-height: 80px;
+  overflow-y: auto;
+  padding-right: 4px;
+  border-left: 2px solid var(--cc-outline);
+  padding-left: 8px;
+}
+
+.cc-twin-summary::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cc-twin-summary::-webkit-scrollbar-thumb {
+  background-color: var(--cc-outline);
+  border-radius: 4px;
+}
+
+.cc-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.cc-page-btn {
+  background: var(--cc-bg-surface);
+  border: 1px solid var(--cc-outline);
+  padding: 6px 12px;
+  border-radius: var(--cc-radius-sm);
+  color: var(--cc-text-primary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cc-page-btn:hover:not(:disabled) {
+  border-color: var(--cc-primary);
+  color: var(--cc-primary);
+}
+
+.cc-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-page-info {
+  font-size: 14px;
+  color: var(--cc-text-secondary);
+}

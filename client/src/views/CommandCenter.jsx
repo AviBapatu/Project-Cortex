@@ -1,23 +1,47 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, Search, Activity, Target, Zap, Users, BrainCircuit } from 'lucide-react';
 import { useDiscovery } from '../hooks/useDiscovery';
 import { useLaunch } from '../hooks/useLaunch';
 import { useCampaignStats } from '../hooks/useCampaignStats';
 import './CommandCenter.css';
-
-const OPPORTUNITIES = [
-  { id: 1, title: 'Churning Whales', gap: '$124k', desc: 'High LTV customers who haven\'t purchased in 90+ days. Prime for re-engagement.', segment: 'High-value shoppers who haven\'t bought in 90 days' },
-  { id: 2, title: 'Impulsive Hikers', gap: '$45k', desc: 'Frequent buyers of outdoor gear during weekend hours. Highly responsive to flash sales.', segment: 'Weekend impulse buyers who spent over $50 on outdoor gear' },
-  { id: 3, title: 'Discount Loyalists', gap: '$82k', desc: 'Engage exclusively with >20% discounts but purchase in high volumes.', segment: 'Shoppers who only buy when discounts exceed 20%' },
-];
+import { useOpportunities } from '../hooks/useOpportunities';
 
 export default function CommandCenter() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [campaignGoal, setCampaignGoal] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const PAGE_SIZE = 8;
   
   // Real Hooks
+  const { opportunities, loading: oppsLoading, error: oppsError, fetchOpportunities } = useOpportunities();
   const { discover, loading: discovering, error: discoverError, results: discoveryResults } = useDiscovery();
   const { launch, launching, error: launchError, launchedId } = useLaunch();
   const { stats, loading: statsLoading } = useCampaignStats(launchedId, !!launchedId);
+
+  const [runningEngine, setRunningEngine] = useState(false);
+
+  const handleRunEngine = async () => {
+    setRunningEngine(true);
+    try {
+      await fetch('http://localhost:4000/api/opportunities/run', { method: 'POST' });
+      await fetchOpportunities();
+    } catch (err) {
+      console.error('Failed to run engine manually', err);
+    } finally {
+      setRunningEngine(false);
+    }
+  };
+
+  const handleToggleSaveOpp = async (oppId) => {
+    try {
+      await fetch(`http://localhost:4000/api/opportunities/${oppId}/toggle-save`, { method: 'POST' });
+      await fetchOpportunities(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Handle clicking an opportunity
   const handleSelectOpportunity = (segment) => {
@@ -27,23 +51,34 @@ export default function CommandCenter() {
 
   const handleSearch = () => {
     if (query.trim()) {
+      setCurrentPage(0); // Reset page on new search
       discover(query);
     }
   };
 
   const handleGenerateCampaign = async () => {
-    if (!discoveryResults) return;
-    await launch({
+    if (!discoveryResults || !campaignGoal) return;
+    const draftId = await launch({
       name: `Campaign: ${query.substring(0, 20)}...`,
-      goal: query.trim(),
+      goal: campaignGoal,
       segmentDescription: query.trim(),
+      queryBreakdown: discoveryResults.queryBreakdown
     });
+    
+    if (draftId) {
+      navigate(`/campaigns/${draftId}`);
+    }
   };
 
   // Determine what to show in the discovery section
   const audienceLocked = !!discoveryResults;
   const audienceSize = discoveryResults?.audienceSize || 0;
-  const twins = discoveryResults?.audienceSample || [];
+  const allTwins = discoveryResults?.audienceSample || [];
+  const queryBreakdown = discoveryResults?.queryBreakdown;
+  
+  // Pagination logic
+  const totalPages = Math.ceil(allTwins.length / PAGE_SIZE);
+  const twins = allTwins.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   // Determine what to show in the dashboard section
   const campaignActive = !!launchedId;
@@ -67,30 +102,7 @@ export default function CommandCenter() {
   return (
     <div className="cc-container">
       
-      {/* 1. Opportunity Engine */}
-      <section>
-        <h2 className="cc-section-title"><Sparkles size={18} /> Opportunity Engine</h2>
-        <div className="cc-opp-grid">
-          {OPPORTUNITIES.map(opp => (
-            <div key={opp.id} className="cc-opp-card">
-              <div className="cc-opp-header">
-                <h3 className="cc-opp-title">{opp.title}</h3>
-                <span className="cc-opp-gap">{opp.gap}</span>
-              </div>
-              <p className="cc-opp-desc">{opp.desc}</p>
-              <button 
-                className="cc-opp-btn"
-                onClick={() => handleSelectOpportunity(opp.segment)}
-                disabled={discovering || launching}
-              >
-                Target Segment →
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 2. Hybrid Search & Discovery Bar */}
+      {/* 1. Hybrid Search & Discovery Bar */}
       <section className="cc-discovery-section">
         <h2 className="cc-section-title" style={{ color: 'var(--cc-accent-neon)' }}><BrainCircuit size={18} /> Semantic Discovery</h2>
         
@@ -116,14 +128,32 @@ export default function CommandCenter() {
           <>
             <div className="cc-results-meta">
               <span><Users size={14} style={{ display:'inline', marginRight:'4px', verticalAlign:'-2px' }}/> {audienceSize.toLocaleString()} matching profiles found</span>
-              <button 
-                className="cc-generate-btn"
-                onClick={handleGenerateCampaign}
-                disabled={launching}
-              >
-                {launching ? 'Generating...' : 'Generate Campaign'} <Zap size={16} style={{ display:'inline', marginLeft:'4px', verticalAlign:'-3px' }}/>
-              </button>
+              <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Campaign Goal (e.g., Summer sale, clear inventory)"
+                  value={campaignGoal}
+                  onChange={(e) => setCampaignGoal(e.target.value)}
+                  className="cc-search-input"
+                  style={{ padding: '8px', flex: 1 }}
+                  disabled={discovering || launching}
+                />
+                <button 
+                  className="cc-generate-btn"
+                  onClick={handleGenerateCampaign}
+                  disabled={launching}
+                >
+                  {launching ? 'Generating...' : 'Generate Campaign'} <Zap size={16} style={{ display:'inline', marginLeft:'4px', verticalAlign:'-3px' }}/>
+                </button>
+              </div>
             </div>
+
+            {queryBreakdown && (
+              <div className={`cc-xai-banner ${queryBreakdown.usedSemanticSearch ? 'semantic' : 'deterministic'}`}>
+                <strong>{queryBreakdown.usedSemanticSearch ? 'Semantic Search Active' : 'Deterministic Search'}: </strong>
+                {queryBreakdown.reasoning}
+              </div>
+            )}
 
             {/* Twins Grid */}
             <div className="cc-twins-grid">
@@ -131,8 +161,20 @@ export default function CommandCenter() {
                 <div key={twin.customerId} className="cc-twin-card">
                   <div className="cc-twin-header">
                     <span className="cc-twin-id">{twin.customerId.substring(0, 8)}</span>
-                    <span>{twin.firstName}</span>
+                    <div className="cc-twin-header-right">
+                      {twin.searchScore && (
+                        <span className="cc-match-score">
+                          {Math.round(twin.searchScore * 100)}% Match
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <div className="cc-twin-name">{twin.firstName} {twin.lastName}</div>
+                  
+                  <div className="cc-twin-summary">
+                    {twin.digitalTwinSummary}
+                  </div>
+
                   <div className="cc-twin-stats">
                     <span className="cc-twin-stat" title="Recency">R:{twin.rfm.recencyScore}</span>
                     <span className="cc-twin-stat" title="Frequency">F:{twin.rfm.frequencyScore}</span>
@@ -141,7 +183,79 @@ export default function CommandCenter() {
                 </div>
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="cc-pagination">
+                <button 
+                  disabled={currentPage === 0} 
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="cc-page-btn"
+                >
+                  ← Previous
+                </button>
+                <span className="cc-page-info">Page {currentPage + 1} of {totalPages}</span>
+                <button 
+                  disabled={currentPage === totalPages - 1} 
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="cc-page-btn"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </>
+        )}
+      </section>
+
+      {/* 2. Opportunity Engine */}
+      <section>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 className="cc-section-title" style={{ margin: 0 }}><Sparkles size={18} /> Opportunity Engine</h2>
+          <button 
+            className="cc-opp-btn" 
+            onClick={handleRunEngine} 
+            disabled={runningEngine}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
+          >
+            {runningEngine ? 'Scanning...' : 'Run Engine Now'}
+          </button>
+        </div>
+        {oppsLoading ? (
+          <div style={{ color: 'var(--cc-text-secondary)', padding: '24px 0' }}>Loading opportunities...</div>
+        ) : oppsError ? (
+          <div style={{ color: 'var(--cc-accent-error)', padding: '24px 0' }}>Failed to load opportunities: {oppsError}</div>
+        ) : opportunities.length === 0 ? (
+          <div style={{ color: 'var(--cc-text-secondary)', padding: '24px 0' }}>No active opportunities right now. The AI is scanning...</div>
+        ) : (
+          <div className="cc-opp-grid">
+            {opportunities.slice(0, 10).map(opp => (
+              <div key={opp._id} className="cc-opp-card">
+                <div className="cc-opp-header">
+                  <h3 className="cc-opp-title">{opp.llmTitle}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="cc-opp-gap">{opp.audienceMatchCount} matches</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleToggleSaveOpp(opp._id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: opp.isSaved ? 'var(--cc-primary)' : 'var(--cc-text-secondary)', padding: 0, display: 'flex', alignItems: 'center' }}
+                      title={opp.isSaved ? "Unsave" : "Save Opportunity"}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontVariationSettings: opp.isSaved ? "'FILL' 1" : "'FILL' 0", fontSize: '20px' }}>
+                        bookmark
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <p className="cc-opp-desc">{opp.llmDescription}</p>
+                <button 
+                  className="cc-opp-btn"
+                  onClick={() => handleSelectOpportunity(opp.llmDescription)}
+                  disabled={discovering || launching}
+                >
+                  Target Segment →
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </section>
 
