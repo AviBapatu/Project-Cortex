@@ -184,14 +184,19 @@ export async function getCampaignStats(req: Request, res: Response): Promise<voi
     // Merge bandit counters into each variant
     const variantStats = campaign.variants.map(v => {
       const live = banditStats.find(b => b.variantId === v.variantId) ?? { sent: 0, opens: 0, clicks: 0 };
-      const ctr = live.sent > 0 ? parseFloat(((live.clicks / live.sent) * 100).toFixed(1)) : 0;
-      const openRate = live.sent > 0 ? parseFloat(((live.opens / live.sent) * 100).toFixed(1)) : 0;
+      
+      const totalSent = (v.stats?.sent ?? 0) + live.sent;
+      const totalOpens = (v.stats?.opens ?? 0) + live.opens;
+      const totalClicks = (v.stats?.clicks ?? 0) + live.clicks;
+
+      const ctr = totalSent > 0 ? parseFloat(((totalClicks / totalSent) * 100).toFixed(1)) : 0;
+      const openRate = totalSent > 0 ? parseFloat(((totalOpens / totalSent) * 100).toFixed(1)) : 0;
       return {
         variantId: v.variantId,
         template: v.template,
-        sent: live.sent,
-        opens: live.opens,
-        clicks: live.clicks,
+        sent: totalSent,
+        opens: totalOpens,
+        clicks: totalClicks,
         ctr,
         openRate,
         isWinner: campaign.winnerVariant === v.variantId,
