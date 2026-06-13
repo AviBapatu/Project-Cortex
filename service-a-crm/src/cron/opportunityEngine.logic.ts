@@ -24,7 +24,7 @@ const SEGMENT_RULES = [
     segmentRuleId: 'HIGH_FREQ_LOW_VALUE',
     ruleDefinition: {
       'rfm.frequencyScore': { $gte: 4 },
-      'rfm.monetaryScore': { $lte: 2 },
+      'rfm.monetaryScore': { $lte: 200 },
     },
     description: 'Frequent buyers with low average order value — upsell opportunity',
   },
@@ -32,10 +32,42 @@ const SEGMENT_RULES = [
     segmentRuleId: 'RECENT_ONE_TIME_BUYERS',
     ruleDefinition: {
       'rfm.totalOrders': { $lte: 2 },
-      'rfm.recencyScore': { $gte: 4 },
+      'rfm.recencyScore': { $gte: 4, $lte: 30 },
     },
     description: 'Recent first-time or second-time buyers — convert to repeat customers',
   },
+  {
+    segmentRuleId: 'WHALE_RETENTION',
+    ruleDefinition: {
+      'rfm.monetaryScore': { $gte: 2000 },
+      'rfm.daysSinceLastPurchase': { $lte: 60 },
+    },
+    description: 'Top spenders who recently purchased — engage for VIP loyalty programs',
+  },
+  {
+    segmentRuleId: 'SLEEPING_BEAUTIES',
+    ruleDefinition: {
+      'rfm.frequencyScore': { $gte: 3 },
+      'rfm.daysSinceLastPurchase': { $gt: 180 },
+    },
+    description: 'Historically frequent buyers who went dormant over 6 months ago',
+  },
+  {
+    segmentRuleId: 'IMPULSE_HIKERS',
+    ruleDefinition: {
+      'rfm.frequencyScore': { $gte: 10 },
+      'rfm.daysSinceLastPurchase': { $lte: 14 },
+    },
+    description: 'Highly active impulsive buyers who buy frequently with high recent activity',
+  },
+  {
+    segmentRuleId: 'SEASONAL_SNOW_ADDICTS',
+    ruleDefinition: {
+      'rfm.totalLifetimeValue': { $gte: 500 },
+      'rfm.daysSinceLastPurchase': { $gte: 15, $lte: 180 },
+    },
+    description: 'Seasonal buyers with high value but moderate to long recency gaps',
+  }
 ];
 
 /**

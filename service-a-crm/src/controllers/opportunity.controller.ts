@@ -3,13 +3,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { Opportunity } from '../models/Opportunity.js';
 import { Campaign } from '../models/Campaign.js';
 import { generateCampaignVariants, hybridSearch } from '../services/rag.service.js';
+import { runOpportunityEngine } from '../cron/opportunityEngine.logic.js';
 
 // ── GET /api/opportunities ─────────────────────────────────────────────────────
 export async function listOpportunities(req: Request, res: Response): Promise<void> {
   try {
-    const { status = 'NEW', page = '1', limit = '20' } = req.query;
+    const { status = 'NEW', isSaved, page = '1', limit = '20' } = req.query;
     const filter: Record<string, any> = {};
     if (status !== 'all') filter.status = status;
+    if (isSaved === 'true') filter.isSaved = true;
 
     const total = await Opportunity.countDocuments(filter);
     const opportunities = await Opportunity.find(filter)
@@ -104,6 +106,35 @@ export async function dismissOpportunity(req: Request, res: Response): Promise<v
       return;
     }
     res.json({ success: true, opportunity: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── POST /api/opportunities/run ───────────────────────────────────────────────
+export async function runEngine(req: Request, res: Response): Promise<void> {
+  try {
+    // We execute the backend engine directly, and wait for completion
+    await runOpportunityEngine();
+    res.json({ success: true, message: 'Opportunity engine scan complete.' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// ── POST /api/opportunities/:id/toggle-save ──────────────────────────────────
+export async function toggleSave(req: Request, res: Response): Promise<void> {
+  try {
+    const opportunity = await Opportunity.findById(req.params.id);
+    if (!opportunity) {
+      res.status(404).json({ success: false, error: 'Opportunity not found.' });
+      return;
+    }
+    
+    opportunity.isSaved = !opportunity.isSaved;
+    await opportunity.save();
+    
+    res.json({ success: true, isSaved: opportunity.isSaved });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
