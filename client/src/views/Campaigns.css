@@ -307,3 +307,15 @@
 .filter-pill.inactive:hover {
   background-color: rgba(227, 226, 224, 0.5);
 }
+
+.collapsed-vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  margin-top: 16px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}

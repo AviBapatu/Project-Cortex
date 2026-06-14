@@ -118,7 +118,7 @@ export default function Shoppers() {
           {/* Left: Audience Search */}
           <div className="gemini-search-wrapper" style={{ flex: 1, maxWidth: '800px', margin: '0 auto' }}>
             <div className="spotlight-input-container" onClick={() => document.getElementById('ai-search-input').focus()}>
-              <span className="material-symbols-outlined" style={{ color: 'var(--sienna)', marginRight: '16px', fontVariationSettings: "'FILL' 1" }}>radar</span>
+              <span className="material-symbols-outlined" style={{ color: 'var(--sienna)', marginRight: '16px', fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
               <textarea 
                 id="ai-search-input"
                 className="spotlight-input custom-scrollbar"

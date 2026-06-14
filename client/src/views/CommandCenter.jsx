@@ -54,23 +54,26 @@ export default function CommandCenter() {
     <div className="cc-container">
       {/* Left Panel: Opportunity Engine (40%) */}
       <section className="cc-left-panel custom-scrollbar">
-        <div className="cc-left-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="cc-left-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 className="font-headline-md text-primary m-0">Opportunity Engine</h2>
-              <button 
-                onClick={handleRunEngine} 
-                disabled={runningEngine}
-                className="btn-ghost"
-                style={{ padding: '4px', display: 'flex', alignItems: 'center' }}
-                title="Run Engine Now"
-              >
-                <span className={`material-symbols-outlined ${runningEngine ? 'rotating' : ''}`} style={{ fontSize: '20px' }}>
-                  sync
-                </span>
-              </button>
-            </div>
+            <h2 className="font-headline-md text-primary m-0">Opportunity Engine</h2>
             <p className="font-label-md text-on-surface-variant m-0">Live AI-generated signals for growth</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className="font-label-md text-on-surface-variant">
+              Next scan: {new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <button 
+              onClick={handleRunEngine} 
+              disabled={runningEngine}
+              className="btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: 'var(--radius-full)' }}
+            >
+              <span className={`material-symbols-outlined ${runningEngine ? 'rotating' : ''}`} style={{ fontSize: '18px' }}>
+                sync
+              </span>
+              {runningEngine ? 'Scanning...' : 'Refresh'}
+            </button>
           </div>
         </div>
 

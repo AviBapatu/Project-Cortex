@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useParams, Outlet } from 'react-router-dom';
+import { useNavigate, useParams, Outlet, useLocation } from 'react-router-dom';
 import './Campaigns.css';
 
 const API_BASE = 'http://localhost:4000/api';
 
 export default function Campaigns() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: selectedId } = useParams();
   const [campaigns, setCampaigns] = useState([]);
   const [total, setTotal] = useState(0);
@@ -23,7 +24,7 @@ export default function Campaigns() {
 
   const [panes, setPanes] = useState(() => {
     const saved = localStorage.getItem('ide-panes');
-    return saved ? JSON.parse(saved) : { left: true, middle: true, right: true };
+    return saved ? JSON.parse(saved) : { left: true, middle: true, right: false };
   });
 
   useEffect(() => {
@@ -118,6 +119,12 @@ export default function Campaigns() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  useEffect(() => {
+    if (!selectedId && campaigns.length > 0) {
+      navigate(`/campaigns/${campaigns[0]._id}`, { replace: true, state: location.state });
+    }
+  }, [selectedId, campaigns, navigate, location.state]);
+
   const pct = (camp) => ((camp.processed / Math.max(1, camp.audienceSize)) * 100).toFixed(0);
 
   const getStatusClass = (status) => {
@@ -167,7 +174,10 @@ export default function Campaigns() {
             </button>
           </div>
         ) : (
-          <span className="material-symbols-outlined collapsed-vertical-icon">view_list</span>
+          <>
+            <span className="material-symbols-outlined collapsed-vertical-icon">view_list</span>
+            <span className="collapsed-vertical-text">Campaigns</span>
+          </>
         )}
         <div className="pane-content left-pane-content custom-scrollbar">
           <div className="pane-inner-padding" style={{ padding: '0 24px 48px 24px' }}>
@@ -313,7 +323,10 @@ export default function Campaigns() {
                 </button>
               </div>
             ) : (
-              <span className="material-symbols-outlined collapsed-vertical-icon">settings</span>
+              <>
+                <span className="material-symbols-outlined collapsed-vertical-icon">settings</span>
+                <span className="collapsed-vertical-text">Configuration</span>
+              </>
             )}
             <div className="pane-content middle-pane-content custom-scrollbar">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--outline)' }}>
@@ -341,7 +354,10 @@ export default function Campaigns() {
                 </button>
               </div>
             ) : (
-              <span className="material-symbols-outlined collapsed-vertical-icon">science</span>
+              <>
+                <span className="material-symbols-outlined collapsed-vertical-icon">science</span>
+                <span className="collapsed-vertical-text">Variants</span>
+              </>
             )}
             <div className="pane-content right-pane-content custom-scrollbar">
             </div>

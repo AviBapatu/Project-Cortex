@@ -397,7 +397,10 @@ export default function CampaignDetail() {
             </button>
           </div>
         ) : (
-          <span className="material-symbols-outlined collapsed-vertical-icon">settings</span>
+          <>
+            <span className="material-symbols-outlined collapsed-vertical-icon">settings</span>
+            <span className="collapsed-vertical-text">Configuration</span>
+          </>
         )}
         <div className="pane-content middle-pane-content custom-scrollbar">
           <div className="pane-inner-padding">
@@ -529,7 +532,10 @@ export default function CampaignDetail() {
             </button>
           </div>
         ) : (
-          <span className="material-symbols-outlined collapsed-vertical-icon">science</span>
+          <>
+            <span className="material-symbols-outlined collapsed-vertical-icon">science</span>
+            <span className="collapsed-vertical-text">Variants</span>
+          </>
         )}
         <div className="pane-content right-pane-content custom-scrollbar">
           <div className="pane-inner-padding">
