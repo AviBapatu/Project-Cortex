@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 const POLL_INTERVAL_MS = 1500;
 
 export interface VariantStats {

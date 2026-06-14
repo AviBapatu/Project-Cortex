@@ -7,6 +7,8 @@ import { useDiscovery } from '../hooks/useDiscovery'; // needed to launch
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import './CommandCenter.css';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+
 export default function CommandCenter() {
   const navigate = useNavigate();
   const { opportunities, loading: oppsLoading, error: oppsError, fetchOpportunities } = useOpportunities();
@@ -21,7 +23,7 @@ export default function CommandCenter() {
   const handleRunEngine = async () => {
     setRunningEngine(true);
     try {
-      await fetch('http://localhost:4000/api/opportunities/run', { method: 'POST' });
+      await fetch(`${API_BASE}/opportunities/run`, { method: 'POST' });
       await fetchOpportunities();
     } catch (err) {
       console.error('Failed to run engine manually', err);
@@ -32,7 +34,7 @@ export default function CommandCenter() {
 
   const handleToggleSaveOpp = async (oppId) => {
     try {
-      await fetch(`http://localhost:4000/api/opportunities/${oppId}/toggle-save`, { method: 'POST' });
+      await fetch(`${API_BASE}/opportunities/${oppId}/toggle-save`, { method: 'POST' });
       await fetchOpportunities(true);
     } catch (e) {
       console.error(e);

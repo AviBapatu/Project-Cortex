@@ -9,7 +9,7 @@ import SavedTemplates from './views/SavedTemplates';
 import Chatbot from './views/Chatbot';
 import DocsViewer from './components/DocsViewer';
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 function App() {
   const navigate = useNavigate();
