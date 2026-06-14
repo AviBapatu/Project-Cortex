@@ -121,7 +121,7 @@ export async function hybridSearch(
         }
       },
       { $addFields: { searchScore: { $meta: 'vectorSearchScore' } } },
-      { $match: { searchScore: { $gte: 0.65 } } }
+      { $match: { searchScore: { $gte: 0.579 } } }
     ];
 
     const results = await Shopper.aggregate(searchPipeline);
