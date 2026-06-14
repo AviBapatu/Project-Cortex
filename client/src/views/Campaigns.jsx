@@ -101,6 +101,18 @@ export default function Campaigns() {
       .catch(() => setLoading(false));
   }, [page, statusFilter]);
 
+  const handleToggleSave = async (campaignId) => {
+    try {
+      const res = await fetch(`${API_BASE}/campaigns/${campaignId}/toggle-save`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setCampaigns(prev => prev.map(c => c._id === campaignId ? { ...c, isSaved: data.isSaved } : c));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const pct = (camp) => ((camp.processed / Math.max(1, camp.audienceSize)) * 100).toFixed(0);
@@ -210,10 +222,18 @@ export default function Campaigns() {
                     onClick={() => navigate(`/campaigns/${camp._id}`)}
                   >
                     <div className="campaign-card-header">
-                      <div className="campaign-card-title-group">
+                      <div className="campaign-card-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span className="material-symbols-outlined campaign-icon">mail</span>
                         <h3 className="campaign-title" style={{ fontSize: '16px' }}>{camp.name}</h3>
                       </div>
+                      <button 
+                        className="btn-ghost" 
+                        onClick={(e) => { e.stopPropagation(); handleToggleSave(camp._id); }}
+                        style={{ padding: '4px', display: 'flex', alignItems: 'center', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+                        title="Save Template"
+                      >
+                        <span className="material-symbols-outlined" style={{ fontVariationSettings: camp.isSaved ? "'FILL' 1" : "'FILL' 0", fontSize: '20px', color: camp.isSaved ? 'var(--sienna)' : 'var(--outline-variant)' }}>bookmark</span>
+                      </button>
                     </div>
                     
                     <p className="campaign-desc" style={{ marginBottom: '8px', fontSize: '12px' }}>{camp.goal || 'No goal specified'}</p>

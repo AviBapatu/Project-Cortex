@@ -365,6 +365,7 @@ export default function CampaignDetail() {
                       <input 
                         type="text" 
                         className="form-input-box" 
+                        placeholder="e.g. SUMMER25"
                         value={couponCode} 
                         onChange={(e) => setCouponCode(e.target.value)} 
                         disabled={stats?.status !== 'DRAFT'}
@@ -375,6 +376,7 @@ export default function CampaignDetail() {
                       <input 
                         type="number" 
                         className="form-input-box" 
+                        placeholder="25"
                         value={discountPct} 
                         onChange={(e) => setDiscountPct(Number(e.target.value))}
                         disabled={stats?.status !== 'DRAFT'}

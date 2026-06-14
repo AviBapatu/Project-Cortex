@@ -157,10 +157,6 @@ export default function SavedTemplates() {
                 Reusable architectures for structured engagement.
               </p>
             </div>
-            <button className="btn-primary">
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-              New Template
-            </button>
           </div>
         </div>
 
