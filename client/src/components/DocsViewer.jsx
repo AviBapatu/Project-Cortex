@@ -10,13 +10,27 @@ import campaignsDoc from '../../../docs/features/campaigns.md?raw';
 import mabEngineDoc from '../../../docs/features/mab-engine.md?raw';
 import cortanaDoc from '../../../docs/features/cortana.md?raw';
 
+// Deep Dive Docs
+import architectureDoc from '../../../docs-deep-dive/01-architecture-and-tradeoffs.md?raw';
+import ingestionDoc from '../../../docs-deep-dive/02-data-ingestion-and-rfm.md?raw';
+import ragPipelineDoc from '../../../docs-deep-dive/03-hybrid-rag-pipeline.md?raw';
+import mabDeepDiveDoc from '../../../docs-deep-dive/04-mab-execution-engine.md?raw';
+import telemetryDoc from '../../../docs-deep-dive/05-telemetry-and-roi.md?raw';
+import hitlSecurityDoc from '../../../docs-deep-dive/06-hitl-security-and-parsing.md?raw';
+
 const SECTIONS = {
   "System Blueprint": blueprintDoc,
   "Hybrid Search & Shoppers": shoppersDoc,
   "Command Center UI": commandCenterDoc,
   "Campaign Generation": campaignsDoc,
   "MAB Execution Engine": mabEngineDoc,
-  "Cortana AI Security": cortanaDoc
+  "Cortana AI Security": cortanaDoc,
+  "Deep Dive: Architecture": architectureDoc,
+  "Deep Dive: Data Ingestion": ingestionDoc,
+  "Deep Dive: Hybrid RAG": ragPipelineDoc,
+  "Deep Dive: MAB Engine": mabDeepDiveDoc,
+  "Deep Dive: Telemetry & ROI": telemetryDoc,
+  "Deep Dive: HITL Security": hitlSecurityDoc
 };
 
 const MemoizedMarkdown = memo(({ content }) => {
