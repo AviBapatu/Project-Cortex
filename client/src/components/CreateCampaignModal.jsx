@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
-export default function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
+export default function CreateCampaignModal({ isOpen, onClose, onSubmit, initialSegment = '' }) {
   const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
-  const [segment, setSegment] = useState('');
+  const [segment, setSegment] = useState(initialSegment);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -20,7 +20,7 @@ export default function CreateCampaignModal({ isOpen, onClose, onSubmit }) {
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3 className="text-h3">Create AI Campaign</h3>
+          <h3 className="font-headline-md m-0" style={{ color: 'var(--primary)' }}>Create AI Campaign</h3>
           <button onClick={onClose} className="btn-ghost" style={{ padding: '4px' }}>
             <span className="material-symbols-outlined" style={{ color: 'var(--on-surface-variant)' }}>close</span>
           </button>

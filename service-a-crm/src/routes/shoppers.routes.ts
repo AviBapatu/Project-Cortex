@@ -6,9 +6,16 @@ const router = Router();
 // GET /api/shoppers?status=ACTIVE&page=1&limit=20
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { status, page = '1', limit = '20' } = req.query;
+    const { status, page = '1', limit = '20', search } = req.query;
     const filter: Record<string, unknown> = {};
     if (status && typeof status === 'string') filter['status'] = status;
+    if (search && typeof search === 'string') {
+      filter['$or'] = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     const total = await Shopper.countDocuments(filter);
     const shoppers = await Shopper.find(filter)

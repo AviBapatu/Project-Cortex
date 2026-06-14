@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import TopNavBar from './components/TopNavBar';
+import { Routes, Route, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import Campaigns from './views/Campaigns';
 import CampaignDetail from './views/CampaignDetail';
 import Shoppers from './views/Shoppers';
@@ -52,45 +50,50 @@ function App() {
     }
   };
 
-  const getTitle = () => {
-    if (location.pathname.startsWith('/campaigns/')) return 'Campaign Bandit';
-    switch (location.pathname) {
-      case '/': return 'Command Center';
-      case '/campaigns': return 'Campaigns';
-      case '/templates': return 'Saved Templates';
-      case '/shoppers': return 'Shoppers';
-      default: return 'Enterprise AI CRM';
-    }
-  };
-
   return (
     <div className="app-container">
-      <Sidebar />
-
-      <div className="main-content">
-        <TopNavBar title={getTitle()} />
-
-        {/* Global error toast */}
-        {error && (
-          <div style={{ background: 'var(--error-container)', color: 'var(--error)', padding: '12px 24px', borderBottom: '1px solid var(--error)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="flex-row gap-sm">
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
-              {error}
-            </div>
-            <button className="btn-ghost" onClick={() => setError(null)}><span className="material-symbols-outlined">close</span></button>
+      {/* TopNavBar (Shared Component) */}
+      <nav className="topbar-nav">
+        <div className="topbar-nav-inner glass-nav">
+          <div className="topbar-brand font-headline-md text-lg">
+            Project Cortex
           </div>
-        )}
+          <div className="topbar-links">
+            <NavLink to="/" end className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Dashboard</NavLink>
+            <NavLink to="/shoppers" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Audiences</NavLink>
+            <NavLink to="/campaigns" className={({ isActive }) => `topbar-link font-label-md ${isActive || location.pathname.startsWith('/campaigns/') ? 'active' : ''}`}>Campaigns</NavLink>
+            <NavLink to="/templates" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Templates</NavLink>
+          </div>
+          <div className="topbar-icons">
+            <span className="material-symbols-outlined topbar-icon">auto_awesome</span>
+            <span className="material-symbols-outlined topbar-icon">notifications</span>
+            <span className="material-symbols-outlined topbar-icon">account_circle</span>
+          </div>
+        </div>
+      </nav>
 
-        <main className="scrollable-area">
-          <Routes>
-            <Route path="/" element={<CommandCenter />} />
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/campaigns/:id" element={<CampaignDetail />} />
-            <Route path="/templates" element={<SavedTemplates />} />
-            <Route path="/shoppers" element={<Shoppers />} />
-          </Routes>
-        </main>
-      </div>
+      {/* Global error toast */}
+      {error && (
+        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, background: 'var(--error-container)', color: 'var(--error)', padding: '12px 24px', borderRadius: 'var(--radius-full)', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>error</span>
+          {error}
+          <button className="btn-ghost" style={{ padding: '4px' }} onClick={() => setError(null)}>
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      )}
+
+      {/* Main Workspace */}
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<CommandCenter />} />
+          <Route path="/campaigns" element={<Campaigns />}>
+            <Route path=":id" element={<CampaignDetail />} />
+          </Route>
+          <Route path="/templates" element={<SavedTemplates />} />
+          <Route path="/shoppers" element={<Shoppers />} />
+        </Routes>
+      </main>
 
       <CreateCampaignModal
         isOpen={isModalOpen}
