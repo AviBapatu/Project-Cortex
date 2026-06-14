@@ -31,7 +31,7 @@ function RoiEstimator({ stats, discountPct = 0, applyDiscountToRoi = false }) {
   
   const netIncome = estimatedRevenue - cogs - variableMarketingCosts - fixedAiOverhead;
 
-  const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
+  const formatMoney = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(val || 0);
 
   return (
     <div className="roi-estimator">
@@ -99,12 +99,12 @@ function CampaignAnalytics({ stats }) {
   );
 }
 
-function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats }) {
+function VariantCard({ variant, maxCtr, totalAudience, status, index, campaignId, fetchStats }) {
   const letters = ['A', 'B', 'C', 'D'];
   const letter = letters[index % letters.length];
   
-  const sentPct = variant.sent > 0 ? 100 : 0;
-  const opensPct = variant.openRate || 0;
+  const sentPct = totalAudience > 0 ? (variant.sent / totalAudience) * 100 : 0;
+  const opensPct = variant.sent > 0 ? (variant.opens / variant.sent) * 100 : 0;
   const clicksPct = variant.ctr || 0;
 
   const [isRefining, setIsRefining] = useState(false);
@@ -196,7 +196,7 @@ function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats })
             <span className="metric-val">{variant.sent.toLocaleString()}</span>
           </div>
           <div className="metric-bar-bg">
-            <div className="metric-bar-fill" style={{ width: `${sentPct}%`, backgroundColor: 'var(--primary)' }}></div>
+            <div className="metric-bar-fill" style={{ width: `${Math.min(sentPct, 100)}%`, backgroundColor: 'var(--primary)' }}></div>
           </div>
         </div>
         
@@ -206,7 +206,7 @@ function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats })
             <span className="metric-val">{variant.opens.toLocaleString()}</span>
           </div>
           <div className="metric-bar-bg">
-            <div className="metric-bar-fill" style={{ width: `${opensPct}%`, backgroundColor: 'var(--secondary-container)' }}></div>
+            <div className="metric-bar-fill" style={{ width: `${Math.min(opensPct, 100)}%`, backgroundColor: 'var(--secondary-container)' }}></div>
           </div>
         </div>
         
@@ -216,7 +216,7 @@ function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats })
             <span className="metric-val">{variant.ctr.toFixed(1)}%</span>
           </div>
           <div className="metric-bar-bg">
-            <div className="metric-bar-fill" style={{ width: `${Math.min(clicksPct * 10, 100)}%`, backgroundColor: 'var(--sienna)' }}></div>
+            <div className="metric-bar-fill" style={{ width: `${Math.min(clicksPct, 100)}%`, backgroundColor: 'var(--sienna)' }}></div>
           </div>
         </div>
       </div>
@@ -490,6 +490,7 @@ export default function CampaignDetail() {
                       key={v.variantId}
                       variant={v}
                       maxCtr={maxCtr}
+                      totalAudience={stats?.audienceSize || 0}
                       status={stats?.status}
                       index={i}
                       campaignId={campaignId}

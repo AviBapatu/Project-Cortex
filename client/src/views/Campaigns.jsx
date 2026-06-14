@@ -10,6 +10,8 @@ export default function Campaigns() {
   const [campaigns, setCampaigns] = useState([]);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearch, setActiveSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -95,11 +97,12 @@ export default function Campaigns() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
     if (statusFilter && statusFilter !== 'All') params.set('status', statusFilter);
+    if (activeSearch) params.set('search', activeSearch);
     fetch(`${API_BASE}/campaigns?${params}`)
       .then(r => r.json())
       .then(d => { setCampaigns(d.campaigns || []); setTotal(d.total || 0); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [page, statusFilter]);
+  }, [page, statusFilter, activeSearch]);
 
   const handleToggleSave = async (campaignId) => {
     try {
@@ -195,11 +198,35 @@ export default function Campaigns() {
               <div className="input-search-wrapper" style={{ marginTop: '16px' }}>
                 <div className="input-search-bg"></div>
                 <div className="input-search-inner">
-                  <span className="material-symbols-outlined text-lg" style={{ color: 'var(--sienna)', marginRight: '8px' }}>auto_awesome</span>
+                  <span 
+                    className="material-symbols-outlined text-lg" 
+                    style={{ color: 'var(--sienna)', marginRight: '8px', cursor: 'pointer' }}
+                    onClick={() => {
+                      setPage(1);
+                      setActiveSearch(searchQuery);
+                    }}
+                  >
+                    auto_awesome
+                  </span>
                   <input 
                     className="input-search" 
                     placeholder="Ask AI..." 
                     type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSearchQuery(val);
+                      if (val.trim() === '') {
+                        setPage(1);
+                        setActiveSearch('');
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setPage(1);
+                        setActiveSearch(searchQuery.trim());
+                      }
+                    }}
                   />
                 </div>
               </div>
