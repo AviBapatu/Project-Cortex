@@ -86,10 +86,6 @@ function App() {
             <NavLink to="/templates" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Templates</NavLink>
             <NavLink to="/chat" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Cortana</NavLink>
           </div>
-          <div className="topbar-icons">
-            <span className="material-symbols-outlined topbar-icon">auto_awesome</span>
-            <span className="material-symbols-outlined topbar-icon">account_circle</span>
-          </div>
         </div>
       </nav>
 
