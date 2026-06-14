@@ -50,7 +50,7 @@ DATABASE FIELDS AVAILABLE FOR FILTERING:
 - rfm.totalOrders: total number of orders (use minTotalOrders / maxTotalOrders)
 
 DECISION RULES:
-- If the query is purely about numbers, thresholds, or status (e.g., "spent more than $1000", "inactive customers", "bought in the last 15 days"), set needsSemanticSearch to false. These are DETERMINISTIC queries.
+- If the query is purely about numbers, thresholds, or status (e.g., "spent more than ₹1000", "inactive customers", "bought in the last 15 days"), set needsSemanticSearch to false. These are DETERMINISTIC queries.
 - If the query involves behavioral traits, personality, preferences, or product affinity (e.g., "impulse hikers", "budget-conscious campers", "love winter sports"), set needsSemanticSearch to true. These need VECTOR SEARCH against customer profiles.
 - If the query is HYBRID (e.g., "high-spending customers who love winter sports"), extract the numeric filters AND set needsSemanticSearch to true with the behavioral part as semanticQuery.
 
@@ -107,5 +107,76 @@ IMPORTANT: Only include filter keys that the user explicitly or implicitly menti
       filters: {},
       reasoning: 'Intent parsing failed — falling back to full semantic search.',
     };
+  }
+}
+
+export async function parseCampaignSearchIntent(query: string): Promise<Record<string, any>> {
+  const systemPrompt = `You are a query router for a CRM campaign database. Translate the user's natural language search into a MongoDB filter query JSON object.
+
+DATABASE FIELDS AVAILABLE:
+- status: "DRAFT", "QUEUED", "EXECUTING", "OPTIMIZING", "COMPLETED", "FAILED"
+- isSaved: boolean (e.g., "saved campaigns", "bookmarked")
+- name: string
+- goal: string
+- channels: string array (e.g., "EMAIL", "SMS", "PUSH")
+- minCtr: number (e.g., 10 for "CTR above 10%")
+- maxCtr: number (e.g., 5 for "CTR below 5%")
+
+RULES:
+- For text concepts, use $regex on "name" or "goal" with $options: "i". Combine with $or if both can match.
+- Map statuses strictly to uppercase enum values.
+- Output ONLY the raw JSON object. Do not use markdown blocks.
+- If the user asks for CTR filters, include "minCtr" and/or "maxCtr" at the top level of the JSON. Do NOT try to write complex mongo queries for CTR.
+
+Example query: "completed email campaigns about winter with CTR over 10%"
+Output: {"status":"COMPLETED","channels":"EMAIL","$or":[{"name":{"$regex":"winter","$options":"i"}},{"goal":{"$regex":"winter","$options":"i"}}],"minCtr":10}
+`;
+
+  try {
+    const response = await getGroq().chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: query }
+      ],
+      model: 'llama-3.1-8b-instant',
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 300,
+    });
+
+    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+    
+    // Intercept minCtr / maxCtr and convert to MongoDB $expr
+    if (parsed.minCtr !== undefined || parsed.maxCtr !== undefined) {
+      const ctrConditions = [];
+      if (parsed.minCtr !== undefined) {
+        ctrConditions.push({ "$gt": [ { "$divide": ["$$v.stats.clicks", "$$v.stats.sent"] }, parsed.minCtr / 100 ] });
+        delete parsed.minCtr;
+      }
+      if (parsed.maxCtr !== undefined) {
+        ctrConditions.push({ "$lt": [ { "$divide": ["$$v.stats.clicks", "$$v.stats.sent"] }, parsed.maxCtr / 100 ] });
+        delete parsed.maxCtr;
+      }
+
+      parsed.$expr = {
+        "$anyElementTrue": {
+          "$map": {
+            "input": "$variants",
+            "as": "v",
+            "in": {
+              "$and": [
+                { "$gt": ["$$v.stats.sent", 0] },
+                ...ctrConditions
+              ]
+            }
+          }
+        }
+      };
+    }
+
+    return parsed;
+  } catch (err) {
+    console.error('[queryIntent.service] parseCampaignSearchIntent failed', err);
+    return { name: { $regex: query, $options: 'i' } }; // Fallback
   }
 }
