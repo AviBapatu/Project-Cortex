@@ -7,6 +7,7 @@ import CreateCampaignModal from './components/CreateCampaignModal';
 import CommandCenter from './views/CommandCenter';
 import SavedTemplates from './views/SavedTemplates';
 import Chatbot from './views/Chatbot';
+import DocsViewer from './components/DocsViewer';
 
 const API_BASE = 'http://localhost:4000/api';
 
@@ -120,6 +121,7 @@ function App() {
         onSubmit={handleCreateCampaign}
         initialSegment={initialSegment}
       />
+      <DocsViewer />
     </div>
   );
 }
