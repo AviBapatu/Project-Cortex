@@ -24,6 +24,8 @@ export const config = {
   MONGO_URI: process.env.MONGO_URI as string,
   REDIS_HOST: process.env.REDIS_HOST as string,
   REDIS_PORT: parseInt(process.env.REDIS_PORT as string, 10),
+  REDIS_USERNAME: process.env.REDIS_USERNAME as string | undefined,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD as string | undefined,
   NODE_ENV: process.env.NODE_ENV as string,
   GROQ_API_KEY: process.env.GROQ_API_KEY as string,
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY as string,

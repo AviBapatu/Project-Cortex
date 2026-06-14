@@ -8,6 +8,8 @@ import { config } from './env.js';
 export const redisConnection = {
   host: config.REDIS_HOST,
   port: config.REDIS_PORT,
+  ...(config.REDIS_USERNAME && { username: config.REDIS_USERNAME }),
+  ...(config.REDIS_PASSWORD && { password: config.REDIS_PASSWORD }),
   maxRetriesPerRequest: null as null,
 };
 
