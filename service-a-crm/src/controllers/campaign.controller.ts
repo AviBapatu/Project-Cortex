@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Campaign } from '../models/Campaign.js';
 import { hybridSearch, deterministicSearch, generateCampaignVariants, refineSingleVariant } from '../services/rag.service.js';
+import { parseCampaignSearchIntent } from '../services/queryIntent.service.js';
 import { dispatchQueue } from '../queues/queues.js';
 
 // ── POST /api/campaigns ────────────────────────────────────────────────────────
@@ -132,8 +133,14 @@ export async function launchCampaign(req: Request, res: Response): Promise<void>
 // ── GET /api/campaigns ─────────────────────────────────────────────────────────
 export async function listCampaigns(req: Request, res: Response): Promise<void> {
   try {
-    const { status, isSaved, page = '1', limit = '20' } = req.query;
-    const filter: Record<string, any> = {};
+    const { status, isSaved, page = '1', limit = '20', search } = req.query;
+    let filter: Record<string, any> = {};
+    
+    if (search && typeof search === 'string') {
+      const aiFilter = await parseCampaignSearchIntent(search);
+      filter = { ...aiFilter };
+    }
+
     if (status) filter.status = status;
     if (isSaved === 'true') filter.isSaved = true;
 
