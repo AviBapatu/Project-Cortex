@@ -17,7 +17,7 @@ const SEGMENT_RULES = [
       'rfm.daysSinceLastPurchase': { $gt: 90 },
       'rfm.totalLifetimeValue': { $gt: 1000 },
     },
-    description: 'Customers with high lifetime value (>$1000) who haven\'t purchased in over 90 days',
+    description: 'Customers with high lifetime value (>₹1000) who haven\'t purchased in over 90 days',
   },
   {
     segmentRuleId: 'HIGH_FREQ_LOW_VALUE',
