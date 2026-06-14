@@ -166,13 +166,31 @@ export default function Shoppers() {
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  setIsModalOpen(true);
+                  if (campaignGoal.trim()) {
+                    handleLaunchCampaign({ 
+                      name: `${campaignGoal.trim()} Campaign`, 
+                      goal: campaignGoal.trim(),
+                      segmentDescription: isSearchActive ? query : 'Manually Filtered Audience'
+                    });
+                  } else {
+                    setIsModalOpen(true);
+                  }
                 }
               }}
             />
             <button 
               className="btn-primary" 
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                if (campaignGoal.trim()) {
+                  handleLaunchCampaign({ 
+                    name: `${campaignGoal.trim()} Campaign`, 
+                    goal: campaignGoal.trim(),
+                    segmentDescription: isSearchActive ? query : 'Manually Filtered Audience'
+                  });
+                } else {
+                  setIsModalOpen(true);
+                }
+              }}
               style={{ marginLeft: '16px', padding: '10px 24px', whiteSpace: 'nowrap' }}
             >
               Launch Campaign
@@ -221,7 +239,7 @@ export default function Shoppers() {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input 
                     type="number" 
-                    placeholder="Min LTV ($)" 
+                    placeholder="Min LTV (₹)" 
                     value={filterMinLtv}
                     onChange={(e) => { setFilterMinLtv(e.target.value); setPage(1); }}
                     style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(196, 199, 202, 0.4)', outline: 'none' }}
@@ -258,7 +276,7 @@ export default function Shoppers() {
                 >
                   <div className="twin-card-header">
                     <h3 className="twin-card-name">{twin.firstName} {twin.lastName}</h3>
-                    <span className="twin-card-ltv">${(twin.rfm?.totalLifetimeValue || 0).toLocaleString()} LTV</span>
+                    <span className="twin-card-ltv">₹{(twin.rfm?.totalLifetimeValue || 0).toLocaleString()} LTV</span>
                   </div>
                   <div className="twin-rfm-bars">
                     {['recency', 'frequency', 'monetary'].map(key => {
@@ -342,7 +360,7 @@ export default function Shoppers() {
                 <div className="twin-stats-grid">
                   <div className="twin-stat-box">
                     <span className="font-label-md" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lifetime Value</span>
-                    <div className="font-headline-lg text-primary" style={{ marginTop: '8px' }}>${(selectedTwin.rfm?.totalLifetimeValue || 0).toLocaleString()}</div>
+                    <div className="font-headline-lg text-primary" style={{ marginTop: '8px' }}>₹{(selectedTwin.rfm?.totalLifetimeValue || 0).toLocaleString()}</div>
                   </div>
                   <div className="twin-stat-box">
                     <span className="font-label-md" style={{ color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</span>
@@ -384,11 +402,11 @@ export default function Shoppers() {
                        else rangeText = '0-1 Orders';
                     }
                     if (key === 'monetary') {
-                       if (tier === 5) rangeText = '$1000+ LTV';
-                       else if (tier === 4) rangeText = '$500-$999 LTV';
-                       else if (tier === 3) rangeText = '$200-$499 LTV';
-                       else if (tier === 2) rangeText = '$50-$199 LTV';
-                       else rangeText = '< $50 LTV';
+                       if (tier === 5) rangeText = '₹1000+ LTV';
+                       else if (tier === 4) rangeText = '₹500-₹999 LTV';
+                       else if (tier === 3) rangeText = '₹200-₹499 LTV';
+                       else if (tier === 2) rangeText = '₹50-₹199 LTV';
+                       else rangeText = '< ₹50 LTV';
                     }
 
                     return (
