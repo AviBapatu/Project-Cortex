@@ -128,7 +128,7 @@ export default function CommandCenter() {
           <div className="kpi-block">
             <span className="kpi-label">Total Revenue</span>
             <div className="kpi-value-group">
-              <span className="kpi-value">${stats ? (stats.totalRevenue / 1000000).toFixed(1) + 'M' : '0.0M'}</span>
+              <span className="kpi-value">₹{stats ? (stats.totalRevenue / 100000).toFixed(1) + 'L' : '0.0L'}</span>
               <span className="kpi-trend" style={{ color: stats?.revenueTrend >= 0 ? 'var(--primary)' : 'var(--error)' }}>
                 {stats?.revenueTrend >= 0 ? '+' : ''}{stats?.revenueTrend?.toFixed(0) || 0}%
               </span>
@@ -195,7 +195,7 @@ export default function CommandCenter() {
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'var(--surface-container-high)', border: 'none', borderRadius: '8px', color: 'var(--on-surface)' }}
                     itemStyle={{ color: 'var(--sienna)', fontWeight: 'bold' }}
-                    formatter={(value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)}
+                    formatter={(value) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value)}
                   />
                   <Area type="monotone" dataKey="revenue" stroke="var(--sienna)" strokeWidth={3} fillOpacity={1} fill="url(#chartGradient)" />
                 </AreaChart>
