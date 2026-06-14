@@ -33,8 +33,8 @@ export async function generateSummary(customerId: string): Promise<string> {
 
   const contextPrompt = `You are writing a CRM behavioral profile summary.
 Customer: ${shopper.firstName} ${shopper.lastName}
-Total Spent: $${totalSpent.toFixed(2)} across ${orders.length} orders
-Average Order Value: $${avgOrder.toFixed(2)}
+Total Spent: ₹${totalSpent.toFixed(2)} across ${orders.length} orders
+Average Order Value: ₹${avgOrder.toFixed(2)}
 Days Since Last Purchase: ${daysSince}
 Recent Products: ${topItems || 'N/A'}
 RFM Scores — Recency: ${shopper.rfm?.recencyScore}/5, Frequency: ${shopper.rfm?.frequencyScore}/5, Monetary: ${shopper.rfm?.monetaryScore}/5
@@ -48,5 +48,5 @@ Task: Write exactly two sentences describing this customer's behavioral profile.
     max_tokens: 200,
   });
 
-  return res.choices[0]?.message?.content?.trim() || `${shopper.firstName} is a customer with ${orders.length} orders totaling $${totalSpent.toFixed(2)}.`;
+  return res.choices[0]?.message?.content?.trim() || `${shopper.firstName} is a customer with ${orders.length} orders totaling ₹${totalSpent.toFixed(2)}.`;
 }
