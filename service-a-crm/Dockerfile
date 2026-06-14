@@ -9,4 +9,5 @@ COPY . .
 
 EXPOSE 4000
 
-CMD ["npm", "run", "start:api"]
+# Start both API and Workers. wait -n exits if either process crashes.
+CMD ["bash", "-c", "npm run start:api & npm run start:workers & wait -n"]
