@@ -423,7 +423,7 @@ body {
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
-  padding: 8px 16px;
+  padding: 14px 20px;
   z-index: 10;
 }
 .input-search {
