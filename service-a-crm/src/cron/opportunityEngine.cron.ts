@@ -15,10 +15,6 @@ const CRON_LOCK_TTL = 3600; // 1 hour — prevents duplicate runs across replica
  */
 export function startOpportunityCron(): void {
   cron.schedule('0 * * * *', async () => {
-    if (process.env.ENABLE_CRON !== 'true') {
-      console.log('[opportunityCron] Skipped — ENABLE_CRON is not true.');
-      return;
-    }
 
     // Attempt to acquire the distributed lock
     const lock = await redis.set(CRON_LOCK_KEY, '1', 'EX', CRON_LOCK_TTL, 'NX');

@@ -51,12 +51,24 @@ export default function CommandCenter() {
     <div className="cc-container">
       {/* Left Panel: Opportunity Engine (40%) */}
       <section className="cc-left-panel custom-scrollbar">
-        <div className="cc-left-header">
+        <div className="cc-left-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 className="font-headline-md text-primary m-0">Opportunity Engine</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h2 className="font-headline-md text-primary m-0">Opportunity Engine</h2>
+              <button 
+                onClick={handleRunEngine} 
+                disabled={runningEngine}
+                className="btn-ghost"
+                style={{ padding: '4px', display: 'flex', alignItems: 'center' }}
+                title="Run Engine Now"
+              >
+                <span className={`material-symbols-outlined ${runningEngine ? 'rotating' : ''}`} style={{ fontSize: '20px' }}>
+                  sync
+                </span>
+              </button>
+            </div>
             <p className="font-label-md text-on-surface-variant m-0">Live AI-generated signals for growth</p>
           </div>
-          <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1", animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>auto_awesome</span>
         </div>
 
         <div className="cc-opps-list">
@@ -76,7 +88,6 @@ export default function CommandCenter() {
                 <div className="opp-card-inner">
                   <div className="opp-card-header">
                     <div className="opp-card-badge">
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>sparkles</span>
                       <span>{opp.isSaved ? 'SAVED' : 'SIGNAL'}</span>
                     </div>
                     <span className="opp-card-match">{opp.audienceMatchCount} Matches</span>

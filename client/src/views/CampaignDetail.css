@@ -1,21 +1,164 @@
 .campaign-detail-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--left-width) var(--middle-width) var(--right-width);
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   height: 100vh;
 }
 
-/* Left Panel: Campaign Studio */
-.campaign-studio-left {
-  width: 40%;
+/* The Workspace Pane */
+.workspace-pane {
+  position: relative;
   height: 100%;
-  background-color: var(--surface-container-low);
-  padding: 48px;
-  overflow-y: auto;
+  overflow: hidden;
   border-right: 1px solid rgba(196, 199, 202, 0.1);
+  background-color: var(--surface-container-low);
   display: flex;
   flex-direction: column;
 }
 
+.workspace-pane.pane-right {
+  border-right: none;
+  background-color: var(--surface);
+}
+
+/* Header Strip & Toggle Button */
+.pane-header-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+.pane-left .pane-header-strip,
+.pane-middle .pane-header-strip {
+  justify-content: flex-end;
+  padding-right: 13px;
+}
+
+.pane-right .pane-header-strip {
+  justify-content: flex-start;
+  padding-left: 13px;
+}
+
+.workspace-pane.closed .pane-header-strip {
+  justify-content: center;
+  padding: 0;
+}
+
+.pane-toggle-btn {
+  background: var(--surface-container-high);
+  border: 1px solid rgba(196, 199, 202, 0.2);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.pane-toggle-btn:hover {
+  background-color: var(--sienna);
+  color: white;
+}
+
+.pane-toggle-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Pane Content */
+.pane-content {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  height: 100%;
+  padding-top: 50px; /* Space for the toggle strip */
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.workspace-pane.closed .pane-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.left-pane-content {
+  min-width: 350px;
+}
+
+.middle-pane-content {
+  min-width: 400px;
+}
+
+.right-pane-content {
+  min-width: 600px; /* Some minimum for 1fr */
+}
+
+/* Inner padding wrappers */
+.pane-inner-padding {
+  padding: 0 48px 48px 48px;
+}
+
+.left-pane-content .pane-inner-padding {
+  padding: 0 24px 48px 24px;
+}
+
+/* Left Pane Mini List */
+.pane-title {
+  font-family: var(--font-family-headline);
+  font-size: 20px;
+  color: var(--primary);
+  margin: 0 0 16px 0;
+}
+
+.mini-campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mini-campaign-card {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid rgba(196, 199, 202, 0.2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mini-campaign-card:hover {
+  border-color: var(--sienna);
+}
+
+.mini-campaign-card.active {
+  border-color: var(--sienna);
+  background-color: var(--secondary-container);
+}
+
+.mini-campaign-name {
+  font-family: var(--font-family-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--on-surface);
+  margin-bottom: 4px;
+}
+
+.mini-campaign-status {
+  font-family: var(--font-family-body);
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  text-transform: capitalize;
+}
+
+/* Existing Styles */
 .studio-header {
   margin-bottom: 40px;
 }
@@ -33,11 +176,10 @@
   font-size: 16px;
 }
 
-/* Offer Setup Form */
 .offer-setup-form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
   margin-bottom: 48px;
 }
 
@@ -176,14 +318,6 @@
 }
 
 /* Right Panel: Variant Testing Grid */
-.campaign-variants-right {
-  width: 60%;
-  height: 100%;
-  background-color: var(--surface);
-  padding: 48px;
-  overflow-y: auto;
-}
-
 .variants-header {
   display: flex;
   align-items: center;
@@ -231,7 +365,7 @@
 }
 
 .variant-card-container {
-  padding: 24px;
+  padding: 32px !important;
   border-radius: 14px;
   display: flex;
   flex-direction: column;
@@ -278,9 +412,9 @@
 }
 
 .variant-metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .metric-col {

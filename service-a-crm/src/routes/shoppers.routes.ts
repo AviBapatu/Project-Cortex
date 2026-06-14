@@ -6,7 +6,7 @@ const router = Router();
 // GET /api/shoppers?status=ACTIVE&page=1&limit=20
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { status, page = '1', limit = '20', search } = req.query;
+    const { status, page = '1', limit = '20', search, minLtv, maxLtv, minRecency, minFrequency } = req.query;
     const filter: Record<string, unknown> = {};
     if (status && typeof status === 'string') filter['status'] = status;
     if (search && typeof search === 'string') {
@@ -15,6 +15,19 @@ router.get('/', async (req: Request, res: Response) => {
         { lastName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
+    }
+
+    // RFM Filters
+    const rfmFilter: Record<string, unknown> = {};
+    if (minLtv) rfmFilter['totalLifetimeValue'] = { $gte: Number(minLtv) };
+    if (maxLtv) rfmFilter['totalLifetimeValue'] = { ...((rfmFilter['totalLifetimeValue'] as any) || {}), $lte: Number(maxLtv) };
+    if (minRecency) rfmFilter['recencyScore'] = { $gte: Number(minRecency) };
+    if (minFrequency) rfmFilter['frequencyScore'] = { $gte: Number(minFrequency) };
+
+    if (Object.keys(rfmFilter).length > 0) {
+      for (const [k, v] of Object.entries(rfmFilter)) {
+        filter[`rfm.${k}`] = v;
+      }
     }
 
     const total = await Shopper.countDocuments(filter);

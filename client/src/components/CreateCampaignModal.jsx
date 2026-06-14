@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-export default function CreateCampaignModal({ isOpen, onClose, onSubmit, initialSegment = '' }) {
+export default function CreateCampaignModal({ isOpen, onClose, onSubmit, initialSegment = '', initialGoal = '' }) {
   const [name, setName] = useState('');
-  const [goal, setGoal] = useState('');
+  const [goal, setGoal] = useState(initialGoal);
   const [segment, setSegment] = useState(initialSegment);
   const [loading, setLoading] = useState(false);
 

@@ -47,12 +47,17 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ success: false, error: err.message || 'Internal server error.' });
 });
 
+import { startOpportunityCron } from './cron/opportunityEngine.cron.js';
+
 // ── Bootstrap ──────────────────────────────────────────────────────────────────
 const bootstrap = async () => {
   try {
     await connectDB();
     await redis.ping();
     console.log('Redis ping successful');
+
+    // Start background crons
+    startOpportunityCron();
 
     app.listen(config.PORT, () => {
       console.log(`✅ Server running in ${config.NODE_ENV} mode on port ${config.PORT}`);

@@ -14,6 +14,7 @@ function App() {
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState(null);
+  const [isNavHidden, setIsNavHidden] = useState(false);
 
   const handleConvertOpportunity = async (oppId) => {
     try {
@@ -52,8 +53,17 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* TopNavBar (Shared Component) */}
-      <nav className="topbar-nav">
+      {/* Global Nav (Bottom) */}
+      <nav className={`topbar-nav ${isNavHidden ? 'hidden' : ''}`}>
+        <button 
+          className="nav-toggle-btn"
+          onClick={() => setIsNavHidden(!isNavHidden)}
+          title={isNavHidden ? "Show Navigation" : "Hide Navigation"}
+        >
+          <span className="material-symbols-outlined">
+            {isNavHidden ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+          </span>
+        </button>
         <div className="topbar-nav-inner glass-nav">
           <div className="topbar-brand font-headline-md text-lg">
             Project Cortex

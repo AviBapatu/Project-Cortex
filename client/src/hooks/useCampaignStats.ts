@@ -115,5 +115,5 @@ export function useCampaignStats(campaignId: string | null, enabled = true) {
   const loading = state.status === 'loading';
   const error = state.status === 'error' ? state.message : null;
 
-  return { state, stats, loading, error };
+  return { state, stats, loading, error, fetchStats };
 }

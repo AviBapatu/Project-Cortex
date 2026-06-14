@@ -17,6 +17,7 @@ export interface IShopper extends Document {
   ai: {
     digitalTwinSummary: string;
     embeddingVector: number[] | null;
+    embeddingModel?: string;
     lastEmbeddedAt?: Date;
   };
   status: 'ACTIVE' | 'EMBEDDING_PENDING' | 'INACTIVE' | 'CHURNED';
