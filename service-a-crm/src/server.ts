@@ -11,6 +11,7 @@ import opportunityRoutes from './routes/opportunities.routes.js';
 import shopperRoutes from './routes/shoppers.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 import searchRoutes from './routes/search.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 
 const app: Application = express();
 
@@ -34,6 +35,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/shoppers', shopperRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // ── 404 Handler ────────────────────────────────────────────────────────────────

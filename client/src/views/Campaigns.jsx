@@ -160,7 +160,7 @@ export default function Campaigns() {
             <div className="campaigns-header" style={{ padding: '0', marginBottom: '16px' }}>
               <div className="flex-row justify-between" style={{ marginBottom: '16px' }}>
                 <h1 className="font-display-lg text-primary m-0" style={{ margin: 0, fontSize: '24px' }}>Campaigns</h1>
-                <button className="btn-primary" onClick={() => {/* handle new */}} style={{ padding: '6px 12px', fontSize: '14px' }}>
+                <button className="btn-primary" onClick={() => navigate('/campaigns', { state: { createCampaign: true } })} style={{ padding: '6px 12px', fontSize: '14px' }}>
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1", fontSize: '18px' }}>add</span>
                   New
                 </button>

@@ -249,9 +249,8 @@
   font-family: var(--font-family-headline);
   font-size: 12px;
   color: var(--on-surface-variant);
-  height: 96px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-style: italic;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import Campaigns from './views/Campaigns';
 import CampaignDetail from './views/CampaignDetail';
@@ -13,8 +13,18 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialSegment, setInitialSegment] = useState('');
   const [error, setError] = useState(null);
   const [isNavHidden, setIsNavHidden] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.createCampaign) {
+      setIsModalOpen(true);
+      setInitialSegment(location.state.initialSegment || '');
+      // Clear state so it doesn't reopen on reload
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, navigate]);
 
   const handleConvertOpportunity = async (oppId) => {
     try {
@@ -106,9 +116,11 @@ function App() {
       </main>
 
       <CreateCampaignModal
+        key={isModalOpen ? 'open' : 'closed'}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateCampaign}
+        initialSegment={initialSegment}
       />
     </div>
   );

@@ -103,7 +103,7 @@ function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats })
   const letters = ['A', 'B', 'C', 'D'];
   const letter = letters[index % letters.length];
   
-  const sentPct = maxCtr > 0 ? 100 : 0; // Simplified for UI
+  const sentPct = variant.sent > 0 ? 100 : 0;
   const opensPct = variant.openRate || 0;
   const clicksPct = variant.ctr || 0;
 
@@ -196,7 +196,7 @@ function VariantCard({ variant, maxCtr, status, index, campaignId, fetchStats })
             <span className="metric-val">{variant.sent.toLocaleString()}</span>
           </div>
           <div className="metric-bar-bg">
-            <div className="metric-bar-fill" style={{ width: `100%`, backgroundColor: 'var(--primary)' }}></div>
+            <div className="metric-bar-fill" style={{ width: `${sentPct}%`, backgroundColor: 'var(--primary)' }}></div>
           </div>
         </div>
         
