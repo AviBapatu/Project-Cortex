@@ -49,7 +49,7 @@ export async function getDashboardStats(req: Request, res: Response): Promise<vo
 
     for (const c of allCampaigns) {
       const variableCostPerUser = (c.channels || []).reduce((sum: number, ch: string) => sum + (CHANNEL_COSTS[ch] || 0), 0);
-      const cost = (c.audienceSize || 0) * variableCostPerUser + 5.00; // Fixed $5 AI overhead
+      const cost = (c.audienceSize || 0) * variableCostPerUser + 5.00; // Fixed ₹5 AI overhead
       totalMarketingCosts += cost;
       
       const aov = c.audienceAov || 0;
