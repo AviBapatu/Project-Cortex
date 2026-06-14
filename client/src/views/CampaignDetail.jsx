@@ -111,6 +111,33 @@ function VariantCard({ variant, maxCtr, totalAudience, status, index, campaignId
   const [refinePrompt, setRefinePrompt] = useState('');
   const [refiningLoading, setRefiningLoading] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [manualTemplate, setManualTemplate] = useState(variant.template || '');
+  const [editingLoading, setEditingLoading] = useState(false);
+
+  const handleManualEdit = async () => {
+    if (!manualTemplate.trim() || editingLoading) return;
+    try {
+      setEditingLoading(true);
+      const res = await fetch(`${API_BASE}/campaigns/${campaignId}/variants/${variant.variantId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ template: manualTemplate })
+      });
+      if (res.ok) {
+        setIsEditing(false);
+        if (fetchStats) await fetchStats();
+      } else {
+        const data = await res.json();
+        console.error('Edit failed:', data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEditingLoading(false);
+    }
+  };
+
   const handleRefine = async () => {
     if (!refinePrompt.trim() || refiningLoading) return;
     try {
@@ -153,18 +180,50 @@ function VariantCard({ variant, maxCtr, totalAudience, status, index, campaignId
           <h4 className="variant-title">Variant {variant.variantId}</h4>
         </div>
         {status === 'DRAFT' && (
-          <button 
-            className="btn-secondary" 
-            style={{ padding: '6px 12px', fontSize: '14px', borderColor: 'var(--sienna)', color: 'var(--sienna)' }}
-            onClick={() => setIsRefining(!isRefining)}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px', marginRight: '4px' }}>auto_awesome</span>
-            Refine
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              className="btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: '14px' }}
+              onClick={() => { setIsEditing(!isEditing); setIsRefining(false); setManualTemplate(variant.template); }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', marginRight: '4px' }}>edit</span>
+              Edit
+            </button>
+            <button 
+              className="btn-secondary" 
+              style={{ padding: '6px 12px', fontSize: '14px', borderColor: 'var(--sienna)', color: 'var(--sienna)' }}
+              onClick={() => { setIsRefining(!isRefining); setIsEditing(false); }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', marginRight: '4px' }}>auto_awesome</span>
+              Refine
+            </button>
+          </div>
         )}
       </div>
       
-      <p className="variant-copy">"{variant.template}"</p>
+      {isEditing ? (
+        <div className="refine-box" style={{ marginTop: '16px', backgroundColor: 'var(--surface-container-lowest)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(196, 199, 202, 0.2)' }}>
+          <label className="form-label" style={{ color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>edit</span>
+            Manual Edit
+          </label>
+          <textarea 
+            className="form-input-box form-textarea" 
+            value={manualTemplate}
+            onChange={(e) => setManualTemplate(e.target.value)}
+            disabled={editingLoading}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+            <button className="btn-secondary" onClick={() => setIsEditing(false)} disabled={editingLoading}>Cancel</button>
+            <button className="btn-primary" onClick={handleManualEdit} disabled={editingLoading || !manualTemplate.trim()}>
+              {editingLoading ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="variant-copy">"{variant.template}"</p>
+      )}
 
       {isRefining && (
         <div className="refine-box" style={{ marginTop: '16px', backgroundColor: 'var(--surface-container-lowest)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(196, 199, 202, 0.2)' }}>

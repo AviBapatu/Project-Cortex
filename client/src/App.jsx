@@ -6,6 +6,7 @@ import Shoppers from './views/Shoppers';
 import CreateCampaignModal from './components/CreateCampaignModal';
 import CommandCenter from './views/CommandCenter';
 import SavedTemplates from './views/SavedTemplates';
+import Chatbot from './views/Chatbot';
 
 const API_BASE = 'http://localhost:4000/api';
 
@@ -83,10 +84,10 @@ function App() {
             <NavLink to="/shoppers" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Audiences</NavLink>
             <NavLink to="/campaigns" className={({ isActive }) => `topbar-link font-label-md ${isActive || location.pathname.startsWith('/campaigns/') ? 'active' : ''}`}>Campaigns</NavLink>
             <NavLink to="/templates" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Templates</NavLink>
+            <NavLink to="/chat" className={({ isActive }) => `topbar-link font-label-md ${isActive ? 'active' : ''}`}>Cortana</NavLink>
           </div>
           <div className="topbar-icons">
             <span className="material-symbols-outlined topbar-icon">auto_awesome</span>
-            <span className="material-symbols-outlined topbar-icon">notifications</span>
             <span className="material-symbols-outlined topbar-icon">account_circle</span>
           </div>
         </div>
@@ -112,6 +113,7 @@ function App() {
           </Route>
           <Route path="/templates" element={<SavedTemplates />} />
           <Route path="/shoppers" element={<Shoppers />} />
+          <Route path="/chat" element={<Chatbot />} />
         </Routes>
       </main>
 

@@ -7,6 +7,7 @@ export default function Sidebar() {
     { id: '/shoppers', icon: 'people', label: 'Shoppers' },
     { id: '/campaigns', icon: 'campaign', label: 'Campaigns' },
     { id: '/templates', icon: 'bookmark', label: 'Saved Templates' },
+    { id: '/chat', icon: 'auto_awesome', label: 'AI Assistant' },
   ];
 
   return (

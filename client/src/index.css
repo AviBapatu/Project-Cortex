@@ -523,3 +523,64 @@ body {
 .form-input::placeholder {
   color: rgba(67, 71, 74, 0.5);
 }
+
+/* AI Assistant Chatbot Styles */
+:root {
+    --ai-gradient: linear-gradient(135deg, var(--secondary) 0%, var(--primary-container) 50%, var(--primary) 100%);
+    --hairline-strong: 1px solid rgba(163, 62, 27, 0.4);
+    --hairline: 1px solid rgba(43, 51, 56, 0.1);
+}
+
+.ai-gradient-border {
+    position: relative;
+    background: var(--surface);
+    border-radius: 14px;
+}
+
+.ai-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    background: var(--ai-gradient);
+    border-radius: 16px;
+    opacity: 0.8;
+    animation: shimmer 3s infinite linear;
+    background-size: 200% 200%;
+}
+
+.ai-gradient-left-only {
+    border-left: 3px solid transparent;
+    border-image: var(--ai-gradient) 1;
+    padding-left: 1rem;
+}
+
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-dots {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.dot { animation: pulse-dots 1.4s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(43, 51, 56, 0.1);
+    border-radius: 2px;
+}
+
+.message-bubble-user {
+    border-top-right-radius: 0 !important;
+}
