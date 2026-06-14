@@ -114,10 +114,10 @@ export async function getDashboardStats(req: Request, res: Response): Promise<vo
           status: c.status
         })),
         systemLogs: [
-          `[${new Date(now.getTime() - 1000 * 60 * 2).toISOString().split('T')[1].split('.')[0]}] Opportunity Engine scanned 40,291 shoppers.`,
-          `[${new Date(now.getTime() - 1000 * 60 * 15).toISOString().split('T')[1].split('.')[0]}] Found 12 new matches for 'VIP Early Access'.`,
-          `[${new Date(now.getTime() - 1000 * 60 * 45).toISOString().split('T')[1].split('.')[0]}] LLM generation complete for Campaign A/B/C variants.`,
-          `[${new Date(now.getTime() - 1000 * 60 * 120).toISOString().split('T')[1].split('.')[0]}] Multi-Armed Bandit weights updated for active campaigns.`
+          `[${new Date(now.getTime() - 1000 * 60 * 2).toISOString().substring(11, 19)}] Opportunity Engine scanned 40,291 shoppers.`,
+          `[${new Date(now.getTime() - 1000 * 60 * 15).toISOString().substring(11, 19)}] Found 12 new matches for 'VIP Early Access'.`,
+          `[${new Date(now.getTime() - 1000 * 60 * 45).toISOString().substring(11, 19)}] LLM generation complete for Campaign A/B/C variants.`,
+          `[${new Date(now.getTime() - 1000 * 60 * 120).toISOString().substring(11, 19)}] Multi-Armed Bandit weights updated for active campaigns.`
         ]
       }
     });
