@@ -5,32 +5,43 @@ Project Cortex is structured as a decoupled monorepo to strictly isolate the exe
 
 ```mermaid
 graph TD
-    %% Core Nodes
-    Client[React SPA / Command Center]
-    CRM_API[Node.js Express CRM API]
+    %% Vercel Hosted Client
+    subgraph Client[Vercel React SPA]
+        CommandCenter[Command Center]
+        ChatbotUI[CRM AI Chatbot]
+        DocsViewer[Markdown DocsViewer]
+    end
+    
+    %% Dockerized CRM Service
+    subgraph CRM_Node[service-a-crm: Docker Concurrent]
+        CRM_API[Node.js Express CRM API]
+        Workers[Node.js BullMQ Workers]
+    end
+
     Stub_API[Channel Stub Simulator]
     
     %% Databases & Queues
     Mongo[(MongoDB Atlas)]
-    Redis[(Redis In-Memory)]
+    Redis[(Redis In-Memory w/ Auth)]
     BullMQ_Dispatch[[BullMQ: Dispatch]]
     BullMQ_Webhook[[BullMQ: Webhooks]]
     
     %% LLM / AI
-    Groq[Groq Llama-3.3]
+    Groq[Groq Llama-3.3 Agent]
     Local_Embed[Transformers.js Embedding]
 
     %% Flows
     Client <-->|REST / Polling| CRM_API
-    CRM_API <-->|RAG / Tools| Groq
+    CRM_API <-->|RAG / Chat / Tools| Groq
     CRM_API <-->|Vector Generation| Local_Embed
     CRM_API <-->|MQL & VectorSearch| Mongo
     
     CRM_API -->|Enqueues| BullMQ_Dispatch
-    BullMQ_Dispatch -->|POST Payload| Stub_API
-    Stub_API -->|Async Webhook| BullMQ_Webhook
-    BullMQ_Webhook -->|Updates Metrics| Redis
-    BullMQ_Webhook -->|Distributed Lock| Mongo
+    BullMQ_Dispatch -->|Worker POST Payload| Stub_API
+    Stub_API -->|Async Webhook| CRM_API
+    CRM_API -->|Enqueues| BullMQ_Webhook
+    BullMQ_Webhook -->|Worker Updates Metrics| Redis
+    BullMQ_Webhook -->|Worker Distributed Lock| Mongo
 ```
 
 ## 2. Rejected Alternatives (The "Why")
