@@ -17,6 +17,115 @@ Cortex is built on a distributed, decoupled monorepo architecture:
 * **MongoDB Atlas**: Primary datastore and Vector Database for Semantic Search.
 * **Redis**: Queue backend (BullMQ), idempotency locks, distributed cron locks, and high-speed Multi-Armed Bandit counters.
 
+```mermaid
+flowchart TD
+    %% ----- Client Layer -----
+    subgraph Client_Tier[Vercel: React SPA]
+        direction TB
+        UI_Dash[Command Center Dashboard]
+        UI_Camp[Campaign Orchestrator]
+        UI_Shop[Audience / Shoppers]
+        UI_Chat[Cortana AI Assistant]
+        UI_Docs[DocsViewer]
+    end
+
+    %% ----- API Layer (service-a-crm) -----
+    subgraph API_Tier[Service A: CRM Core API Container]
+        direction TB
+        
+        subgraph Controllers[Express Controllers]
+            Ctrl_Chat[Chat & Agent Controller]
+            Ctrl_Camp[Campaign Controller]
+            Ctrl_Webh[Webhook Controller w/ Idempotency]
+        end
+        
+        subgraph Services[Core Business Logic]
+            Svc_Agent[Agent Service - Tools & Orchestration]
+            Svc_RAG[Hybrid RAG & Vector Generation]
+            Svc_Intent[Query Intent Parser]
+            Svc_RFM[RFM Engine]
+        end
+        
+        Ctrl_Chat --> Svc_Agent
+        Ctrl_Camp --> Svc_RFM
+        Svc_Agent --> Svc_RAG
+        Svc_Agent --> Svc_Intent
+    end
+
+    %% ----- Worker Layer (service-a-crm) -----
+    subgraph Worker_Tier[Service A: Background Workers Container]
+        direction TB
+        Worker_Disp[Dispatch Worker]
+        Worker_Webh[Webhook Worker]
+        Cron_Opp[Opportunity Engine Cron]
+        
+        %% Mechanisms
+        Mech_15Lock(15% Race Condition Lock)
+        Mech_MAB(Multi-Armed Bandit Optimizer)
+        
+        Worker_Webh --> Mech_15Lock
+        Worker_Webh --> Mech_MAB
+    end
+
+    %% ----- External Systems / AI -----
+    subgraph External_AI[AI & Machine Learning]
+        LLM[Groq Llama-3.3 / Gemini API]
+        Embed[Transformers.js Local Embeddings]
+    end
+
+    %% ----- Stub Simulator -----
+    subgraph Stub_Tier[Service B: Channel Stub Simulator]
+        Stub_API[Mock SMS/Email API]
+        Stub_Webh[Async Webhook Emitter]
+        Stub_API -.-> |Simulates Click/Delivery| Stub_Webh
+    end
+
+    %% ----- Data Layer -----
+    subgraph Data_Tier[Persistence & State]
+        direction LR
+        subgraph Redis_Cache[Redis In-Memory]
+            Red_Queue[(BullMQ Queues)]
+            Red_Idem[(Idempotency Keys)]
+            Red_Lock[(Distributed Locks)]
+        end
+        
+        subgraph Mongo_DB[MongoDB Atlas]
+            Doc_Store[(Document Store)]
+            Vec_Store[(Vector Search Index)]
+        end
+    end
+
+    %% ----- Connections & Flows -----
+    
+    %% Client to API
+    Client_Tier <-->|REST APIs & Polling| Controllers
+    
+    %% AI Flows
+    Svc_Agent <-->|Prompts / Tool Calling| LLM
+    Svc_RAG <-->|Generates Vectors| Embed
+    
+    %% Data Flows (API)
+    Services <-->|MQL & Aggregations| Doc_Store
+    Svc_RAG <-->|Hybrid Vector Search| Vec_Store
+    Ctrl_Webh <-->|Check/Set NX| Red_Idem
+    
+    %% Queues
+    Ctrl_Camp -->|Enqueue Dispatch| Red_Queue
+    Ctrl_Webh -->|Enqueue Webhook| Red_Queue
+    
+    Worker_Disp <-->|Dequeue| Red_Queue
+    Worker_Webh <-->|Dequeue| Red_Queue
+    
+    %% Dispatch Flow
+    Worker_Disp -->|POST HTTP Payload| Stub_API
+    Stub_Webh -->|HTTP POST| Ctrl_Webh
+    
+    %% Worker Data Flows
+    Worker_Webh -->|Update MAB Stats| Red_Lock
+    Worker_Webh -->|CAS Updates| Doc_Store
+    Cron_Opp -->|Check TTL Lock| Red_Lock
+```
+
 For an in-depth look at the architecture and strategic design choices, refer to [Architecture and Trade-offs](docs-deep-dive/01-architecture-and-tradeoffs.md).
 
 ## Core Features and Capabilities
