@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { hybridSearch, generateCampaignVariants } from './rag.service.js';
+import { Campaign } from '../models/Campaign.js';
 
 let _groq: Groq | null = null;
 function getGroq(): Groq {
@@ -63,6 +64,22 @@ const tools = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_campaign_performance",
+      description: "Fetch historical campaigns sorted by audience size or processed count to answer questions about past performance. Useful for finding the most successful campaigns or understanding previous campaign metrics.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: {
+            type: "number",
+            description: "Number of top campaigns to return (default 5)"
+          }
+        }
+      }
+    }
+  }
 ];
 
 export async function processChat(messages: any[]) {
@@ -142,6 +159,16 @@ export async function processChat(messages: any[]) {
             audienceSize: searchResult.audienceSize,
             variants
           });
+        }
+        else if (functionName === 'get_campaign_performance') {
+          const limit = functionArgs.limit || 5;
+          const topCampaigns = await Campaign.find({ status: 'COMPLETED' })
+            .sort({ 'processed': -1 })
+            .limit(limit)
+            .select('name goal variants winnerVariant processed failed createdAt')
+            .lean();
+          
+          functionResponse = JSON.stringify(topCampaigns);
         }
 
         chatMessages.push({
