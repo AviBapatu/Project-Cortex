@@ -1,11 +1,16 @@
 import type { IShopper } from '../models/Shopper.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { pipeline } from '@xenova/transformers';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-const embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+const EMBEDDING_DIMS = 384;
+const EMBEDDING_MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
 
-const EMBEDDING_DIMS = 3072;
-const EMBEDDING_MODEL_NAME = 'gemini-embedding-001';
+let _embeddingPipeline: any = null;
+async function getEmbeddingPipeline() {
+  if (!_embeddingPipeline) {
+    _embeddingPipeline = await pipeline('feature-extraction', EMBEDDING_MODEL_NAME);
+  }
+  return _embeddingPipeline;
+}
 
 export async function embedShopper(shopper: IShopper): Promise<void> {
   const summary = shopper.ai?.digitalTwinSummary;
@@ -14,8 +19,9 @@ export async function embedShopper(shopper: IShopper): Promise<void> {
   }
 
   try {
-    const embedRes = await embeddingModel.embedContent(summary);
-    const vector = embedRes.embedding.values;
+    const pipe = await getEmbeddingPipeline();
+    const output: any = await pipe(summary, { pooling: 'mean', normalize: true });
+    const vector = Array.from(output.data) as number[];
 
     if (vector.length !== EMBEDDING_DIMS) {
       throw new Error(`Unexpected embedding dimensions: ${vector.length} (expected ${EMBEDDING_DIMS})`);
