@@ -5,6 +5,8 @@ import { Shopper } from '../models/Shopper.js';
 import { Campaign } from '../models/Campaign.js';
 import { banditFlushQueue } from '../queues/queues.js';
 import * as bandit from '../services/bandit.service.js';
+import { launchCampaign } from '../controllers/campaign.controller.js';
+import { send } from 'node:process';
 
 const SERVICE_B_URL = process.env.SERVICE_B_URL || 'http://localhost:5000';
 const DISPATCH_CONCURRENCY = parseInt(process.env.DISPATCH_CONCURRENCY || '50', 10);

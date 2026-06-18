@@ -73,14 +73,39 @@ const tools = [
         type: "object",
         properties: {
           limit: {
-            type: "number",
-            description: "Number of top campaigns to return (default 5)"
+            type: "string",
+            description: "Number of top campaigns to return (e.g., '5')"
           }
         }
       }
     }
   }
 ];
+
+async function createChatCompletionWithRetry(chatMessages: any[], tools: any[], maxRetries = 2) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await getGroq().chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: chatMessages,
+        tools: tools,
+        tool_choice: "auto",
+        max_tokens: 4096
+      });
+    } catch (error: any) {
+      if (attempt === maxRetries) throw error;
+      const isToolUseFailed = error?.status === 400 && 
+        (error?.error?.code === 'tool_use_failed' || error?.error?.error?.code === 'tool_use_failed');
+      
+      if (isToolUseFailed) {
+        console.warn(`[agent.service] Groq tool use failed (attempt ${attempt + 1}), retrying...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("Max retries reached");
+}
 
 export async function processChat(messages: any[]) {
   // Ensure system prompt is first
@@ -90,13 +115,7 @@ export async function processChat(messages: any[]) {
   ];
 
   try {
-    let response = await getGroq().chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: chatMessages,
-      tools: tools,
-      tool_choice: "auto",
-      max_tokens: 4096
-    });
+    let response = await createChatCompletionWithRetry(chatMessages, tools);
 
     const firstChoice = response.choices?.[0];
     if (!firstChoice) {
@@ -149,19 +168,23 @@ export async function processChat(messages: any[]) {
             semanticQuery: segmentDescription
           };
 
-          // 4. Return the staging payload to the LLM (does not save to DB)
-          // Include name and goal so LLM can easily format the tag
-          functionResponse = JSON.stringify({
-            name,
-            goal,
-            segmentDescription,
-            segmentQuery,
-            audienceSize: searchResult.audienceSize,
-            variants
-          });
+          // 4. Short-circuit: Instead of relying on the LLM to accurately echo back 
+          // a massive JSON object (which frequently truncates), we instantly return 
+          // the perfectly formatted tag from the backend!
+          return {
+            role: 'assistant',
+            content: `[CAMPAIGN_PROPOSAL: ${JSON.stringify({
+              name,
+              goal,
+              segmentDescription,
+              segmentQuery,
+              audienceSize: searchResult.audienceSize,
+              variants
+            })} ]\n\nI have drafted the campaign for you. Please review the details and approve.`
+          };
         }
         else if (functionName === 'get_campaign_performance') {
-          const limit = functionArgs.limit || 5;
+          const limit = parseInt(String(functionArgs.limit), 10) || 5;
           const topCampaigns = await Campaign.find({ status: 'COMPLETED' })
             .sort({ 'processed': -1 })
             .limit(limit)
@@ -180,12 +203,7 @@ export async function processChat(messages: any[]) {
       }
 
       // Second completion request with tool results
-      response = await getGroq().chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: chatMessages,
-        tools: tools,
-        max_tokens: 4096
-      });
+      response = await createChatCompletionWithRetry(chatMessages, tools);
       
       const secondChoice = response.choices?.[0];
       if (!secondChoice) {
